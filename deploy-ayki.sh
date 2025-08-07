@@ -81,9 +81,9 @@ log_success "Code source mis à jour"
 log_info "Déploiement du backend NestJS..."
 cd $BACKEND_DIR
 
-# Installation des dépendances
+# Installation des dépendances (avec dev dependencies pour build)
 log_info "Installation des dépendances backend..."
-npm install --production --silent
+npm install --silent
 
 # Vérifier la configuration
 if [[ ! -f .env ]]; then
@@ -212,12 +212,10 @@ log_info "Nettoyage..."
 # Nettoyer les anciens logs (garder les 7 derniers jours)
 find $LOG_DIR -name "*.log" -mtime +7 -delete 2>/dev/null || true
 
-# Nettoyer les node_modules de dev si en production
-if [[ "$NODE_ENV" == "production" ]]; then
-    log_info "Nettoyage des dépendances de développement..."
-    cd $BACKEND_DIR && npm prune --production
-    cd $FRONTEND_DIR && npm prune --production
-fi
+# Nettoyer les dépendances de développement après build
+log_info "Nettoyage des dépendances de développement..."
+cd $BACKEND_DIR && npm prune --production --silent
+cd $FRONTEND_DIR && npm prune --production --silent
 
 log_success "Déploiement AYKI terminé avec succès!"
 echo "========================================"
