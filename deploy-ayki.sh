@@ -10,7 +10,7 @@ echo "🚀 Démarrage du déploiement AYKI..."
 echo "========================================"
 
 # Variables
-PROJECT_DIR="/var/www/ayki"
+PROJECT_DIR="/var/www/Ayki"
 BACKEND_DIR="$PROJECT_DIR/ayki_backend"
 FRONTEND_DIR="$PROJECT_DIR"
 LOG_DIR="/var/log/pm2"
