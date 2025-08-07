@@ -3,8 +3,7 @@ module.exports = {
     {
       name: 'ayki-backend',
       cwd: './ayki_backend',
-      script: 'npm',
-      args: 'run start:prod',
+      script: 'dist/src/main.js',
       instances: 1,
       exec_mode: 'fork',
       watch: false,
