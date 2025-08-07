@@ -81,9 +81,9 @@ log_success "Code source mis à jour"
 log_info "Déploiement du backend NestJS..."
 cd $BACKEND_DIR
 
-# Installation des dépendances (avec dev dependencies pour build)
-log_info "Installation des dépendances backend..."
-npm install --silent
+# Installation uniquement des dépendances de production (build déjà fait en local)
+log_info "Installation des dépendances backend (production)..."
+npm install --production --silent
 
 # Vérifier la configuration
 if [[ ! -f .env ]]; then
@@ -91,10 +91,12 @@ if [[ ! -f .env ]]; then
     exit 1
 fi
 
-# Build du backend
-log_info "Build du backend NestJS..."
-npm run build
-log_success "Backend construit avec succès"
+# Vérifier que le build existe (fait en local)
+if [[ ! -d "dist" ]]; then
+    log_error "Dossier dist manquant - veuillez faire 'npm run build' en local et committer"
+    exit 1
+fi
+log_success "Build backend trouvé (fait en local)"
 
 # Exécution des migrations si nécessaire
 log_info "Vérification des migrations de base de données..."
@@ -212,10 +214,7 @@ log_info "Nettoyage..."
 # Nettoyer les anciens logs (garder les 7 derniers jours)
 find $LOG_DIR -name "*.log" -mtime +7 -delete 2>/dev/null || true
 
-# Nettoyer les dépendances de développement après build
-log_info "Nettoyage des dépendances de développement..."
-cd $BACKEND_DIR && npm prune --production --silent
-cd $FRONTEND_DIR && npm prune --production --silent
+# Note: Pas de nettoyage nécessaire car on installe déjà en --production
 
 log_success "Déploiement AYKI terminé avec succès!"
 echo "========================================"
