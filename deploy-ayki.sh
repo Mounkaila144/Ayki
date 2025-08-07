@@ -81,9 +81,9 @@ log_success "Code source mis à jour"
 log_info "Déploiement du backend NestJS..."
 cd $BACKEND_DIR
 
-# Installation uniquement des dépendances de production (build déjà fait en local)
-log_info "Installation des dépendances backend (production)..."
-npm install --production --silent
+# Installation des dépendances (incluant dev pour le build)
+log_info "Installation des dépendances backend..."
+npm install --silent
 
 # Vérifier la configuration
 if [[ ! -f .env ]]; then
@@ -91,66 +91,59 @@ if [[ ! -f .env ]]; then
     exit 1
 fi
 
-# Vérifier que le build existe (fait en local)
-if [[ ! -d "dist" ]]; then
-    log_error "Dossier dist manquant - veuillez faire 'npm run build' en local et committer"
-    exit 1
-fi
-log_success "Build backend trouvé (fait en local)"
+# Build du backend sur le serveur
+log_info "Build du backend NestJS sur le serveur..."
+npm run build
+log_success "Backend construit avec succès"
 
-# Note: Migrations et seeding gérés automatiquement par NestJS
-# TypeORM synchronize=true en développement
-log_info "Configuration base de données gérée par NestJS (synchronize actif)"
+# Exécution des migrations si nécessaire
+log_info "Vérification des migrations de base de données..."
+npm run migration:run 2>/dev/null || log_warning "Aucune migration à exécuter ou erreur de migration"
+
+# Exécution du seeding si nécessaire
+log_info "Seeding de la base de données..."
+npm run db:seed 2>/dev/null || log_warning "Seeding déjà effectué ou erreur de seeding"
 
 # Arrêter l'ancien processus PM2 backend s'il existe
 log_info "Arrêt de l'ancien processus backend..."
 pm2 delete ayki-backend 2>/dev/null || true
 
-# Démarrer le nouveau processus backend
-log_info "Démarrage du nouveau processus backend..."
-pm2 start npm --name "ayki-backend" -- run start:prod
+# Vérifier si PM2 est installé, sinon l'installer
+if ! command -v pm2 &> /dev/null; then
+    log_info "Installation de PM2..."
+    npm install -g pm2
+fi
+
+# Revenir au dossier principal pour utiliser ecosystem.config.js
+cd $PROJECT_DIR
+
+# Démarrer les applications avec ecosystem
+log_info "Démarrage des applications avec PM2 ecosystem..."
+pm2 delete ayki-backend 2>/dev/null || true
+pm2 delete ayki-frontend 2>/dev/null || true
+
+# Démarrer uniquement le backend d'abord
+pm2 start ecosystem.config.js --only ayki-backend --env production
 log_success "Backend démarré avec PM2"
 
 # ===================================
 # DÉPLOIEMENT FRONTEND
 # ===================================
 log_info "Déploiement du frontend Next.js..."
-cd $FRONTEND_DIR
 
-# Installation des dépendances
+# Installation des dépendances frontend
 log_info "Installation des dépendances frontend..."
 npm install --silent
-
-# Vérifier la configuration
-if [[ ! -f .env.local ]] && [[ ! -f .env.production ]]; then
-    log_warning "Aucun fichier d'environnement trouvé (.env.local ou .env.production)"
-fi
 
 # Build du frontend (export statique selon la configuration Next.js)
 log_info "Build du frontend Next.js..."
 npm run build
 log_success "Frontend construit avec succès"
 
-# Pour l'export statique, pas besoin de PM2, juste servir les fichiers statiques
-log_info "Configuration du frontend statique..."
-if [[ -d "out" ]]; then
-    # Export statique activé
-    log_info "Export statique détecté, copie des fichiers vers le serveur web..."
-    rm -rf /var/www/html/ayki 2>/dev/null || true
-    mkdir -p /var/www/html/ayki
-    cp -r out/* /var/www/html/ayki/
-    chown -R www-data:www-data /var/www/html/ayki
-    log_success "Fichiers statiques copiés"
-else
-    # Mode serveur Next.js
-    log_info "Mode serveur Next.js détecté..."
-    # Arrêter l'ancien processus PM2 frontend s'il existe
-    pm2 delete ayki-frontend 2>/dev/null || true
-    
-    # Démarrer le nouveau processus frontend
-    pm2 start npm --name "ayki-frontend" -- run start
-    log_success "Frontend démarré avec PM2"
-fi
+# Démarrer le frontend avec PM2
+log_info "Démarrage du frontend avec PM2..."
+pm2 start ecosystem.config.js --only ayki-frontend --env production
+log_success "Frontend démarré avec PM2"
 
 # ===================================
 # CONFIGURATION ET VÉRIFICATIONS
@@ -181,21 +174,19 @@ log_info "Tests de connectivité..."
 
 # Test backend (port 3002 pour éviter les conflits)
 if curl -s http://localhost:3002/api > /dev/null; then
-    log_success "Backend accessible sur le port 3002"
+    log_success "✅ Backend API accessible sur le port 3002"
 else
-    log_warning "Backend inaccessible sur le port 3002"
+    log_error "❌ Backend inaccessible sur le port 3002"
 fi
 
-# Test frontend (si mode serveur)
-if pm2 list | grep -q "ayki-frontend"; then
-    if curl -s http://localhost:3003 > /dev/null; then
-        log_success "Frontend accessible sur le port 3003"
-    else
-        log_warning "Frontend inaccessible sur le port 3003"
-    fi
+# Test Swagger UI
+if curl -s http://localhost:3002/api/docs > /dev/null; then
+    log_success "✅ Swagger UI accessible"
 else
-    log_info "Frontend en mode export statique - serveur web configuré"
+    log_warning "⚠️ Swagger UI inaccessible"
 fi
+
+log_info "Frontend temporairement désactivé - backend seul fonctionnel"
 
 # Redémarrer Apache pour s'assurer que la configuration est prise en compte
 log_info "Redémarrage d'Apache..."
