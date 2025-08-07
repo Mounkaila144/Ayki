@@ -15,6 +15,8 @@ async function bootstrap() {
             'http://localhost:3000',
             'http://localhost:3003',
             'https://ayki.ptrniger.com',
+            'http://144.91.94.164:3003',
+            'http://144.91.94.164',
             process.env.CORS_ORIGIN || 'http://localhost:3000'
         ],
         credentials: true,
