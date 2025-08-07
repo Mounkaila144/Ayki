@@ -34,13 +34,13 @@ cd Ayki
 ### 2. Configuration Apache
 ```bash
 # Copier la configuration
-sudo cp apache-config-example.conf /etc/apache2/sites-available/ayki.votre-domaine.com.conf
+sudo cp apache-config-example.conf /etc/apache2/sites-available/ayki.ptrniger.com.conf
 
-# Modifier le fichier avec vos paramètres
-sudo nano /etc/apache2/sites-available/ayki.votre-domaine.com.conf
+# Modifier le fichier avec vos paramètres (optionnel, déjà configuré)
+sudo nano /etc/apache2/sites-available/ayki.ptrniger.com.conf
 
 # Activer le site
-sudo a2ensite ayki.votre-domaine.com.conf
+sudo a2ensite ayki.ptrniger.com.conf
 sudo systemctl reload apache2
 ```
 
@@ -91,7 +91,7 @@ curl http://localhost:3002/api
 curl http://localhost:3002/api/docs
 
 # Site web
-curl https://ayki.votre-domaine.com
+curl https://ayki.ptrniger.com
 ```
 
 ## 🛠 Commandes de Maintenance
@@ -154,10 +154,10 @@ journalctl -u apache2 -f
 
 ## 📊 URLs de Production
 
-- **Site web** : https://ayki.votre-domaine.com
-- **API Backend** : https://ayki.votre-domaine.com/api
-- **Swagger UI** : https://ayki.votre-domaine.com/api/docs
-- **Health Check** : https://ayki.votre-domaine.com/health
+- **Site web** : https://ayki.ptrniger.com
+- **API Backend** : https://ayki.ptrniger.com/api
+- **Swagger UI** : https://ayki.ptrniger.com/api/docs
+- **Health Check** : https://ayki.ptrniger.com/health
 
 ## 🔐 Sécurité
 

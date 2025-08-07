@@ -229,7 +229,7 @@ if pm2 list | grep -q "ayki-frontend"; then
 else
     echo "   - Frontend: Serveur web statique configuré"
 fi
-echo "   - Site web: https://votre-domaine.com"
+echo "   - Site web: https://ayki.ptrniger.com"
 echo ""
 echo "📋 Commandes utiles:"
 echo "   - Logs: pm2 logs"
