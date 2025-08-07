@@ -11,8 +11,15 @@ async function bootstrap() {
         prefix: '/uploads/',
     });
     app.enableCors({
-        origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+        origin: [
+            'http://localhost:3000',
+            'http://localhost:3003',
+            'https://ayki.ptrniger.com',
+            process.env.CORS_ORIGIN || 'http://localhost:3000'
+        ],
         credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
     });
     app.useGlobalPipes(new common_1.ValidationPipe({
         whitelist: true,
