@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Progress } from "@/components/ui/progress";
+
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -605,7 +605,12 @@ export default function CandidateDashboard() {
               </p>
               <div className="flex items-center space-x-4">
                 <div className="flex-1">
-                  <Progress value={profile?.profileCompletion || 30} className="h-2 bg-white/20" />
+                  <div className="w-full bg-white/20 rounded-full h-2">
+                    <div
+                      className="bg-white h-2 rounded-full transition-all"
+                      style={{ width: `${profile?.profileCompletion || 30}%` }}
+                    ></div>
+                  </div>
                 </div>
                 <span className="text-sm font-medium">{profile?.profileCompletion || 30}%</span>
               </div>
@@ -1165,7 +1170,12 @@ export default function CandidateDashboard() {
                                     </span>
                                   )}
                                 </div>
-                                <Progress value={getSkillLevelPercentage(userSkill.level)} className="h-2" />
+                                <div className="w-full bg-gray-200 rounded-full h-2">
+                                  <div
+                                    className="bg-blue-500 h-2 rounded-full transition-all"
+                                    style={{ width: `${getSkillLevelPercentage(userSkill.level)}%` }}
+                                  ></div>
+                                </div>
                               </div>
                             </div>
                             <div className="flex space-x-1 ml-2">
@@ -1204,9 +1214,9 @@ export default function CandidateDashboard() {
                         <div className="p-4 border rounded-lg bg-blue-50/50">
                           <h5 className="font-medium text-blue-700 mb-2">Frontend</h5>
                           <div className="flex flex-wrap gap-1">
-                            {skills.filter(skill => ['React', 'TypeScript'].includes(skill)).map(skill => (
-                              <Badge key={skill} variant="outline" className="text-xs">
-                                {skill}
+                            {skills.filter(skill => ['React', 'TypeScript'].includes(skill.skill?.name || skill.name)).map(skill => (
+                              <Badge key={skill.id} variant="outline" className="text-xs">
+                                {skill.skill?.name || skill.name}
                               </Badge>
                             ))}
                           </div>
@@ -1214,9 +1224,9 @@ export default function CandidateDashboard() {
                         <div className="p-4 border rounded-lg bg-green-50/50">
                           <h5 className="font-medium text-green-700 mb-2">Backend</h5>
                           <div className="flex flex-wrap gap-1">
-                            {skills.filter(skill => ['Node.js', 'Python', 'MongoDB'].includes(skill)).map(skill => (
-                              <Badge key={skill} variant="outline" className="text-xs">
-                                {skill}
+                            {skills.filter(skill => ['Node.js', 'Python', 'MongoDB'].includes(skill.skill?.name || skill.name)).map(skill => (
+                              <Badge key={skill.id} variant="outline" className="text-xs">
+                                {skill.skill?.name || skill.name}
                               </Badge>
                             ))}
                           </div>
@@ -1224,9 +1234,9 @@ export default function CandidateDashboard() {
                         <div className="p-4 border rounded-lg bg-purple-50/50">
                           <h5 className="font-medium text-purple-700 mb-2">DevOps</h5>
                           <div className="flex flex-wrap gap-1">
-                            {skills.filter(skill => ['Docker', 'AWS'].includes(skill)).map(skill => (
-                              <Badge key={skill} variant="outline" className="text-xs">
-                                {skill}
+                            {skills.filter(skill => ['Docker', 'AWS'].includes(skill.skill?.name || skill.name)).map(skill => (
+                              <Badge key={skill.id} variant="outline" className="text-xs">
+                                {skill.skill?.name || skill.name}
                               </Badge>
                             ))}
                           </div>
@@ -1285,7 +1295,12 @@ export default function CandidateDashboard() {
                       <span className="text-gray-600">Profil complété</span>
                       <span className="font-medium">{profile?.profileCompletion || 30}%</span>
                     </div>
-                    <Progress value={profile?.profileCompletion || 30} className="h-2" />
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className="bg-blue-500 h-2 rounded-full transition-all"
+                        style={{ width: `${profile?.profileCompletion || 30}%` }}
+                      ></div>
+                    </div>
                   </div>
 
                   <Separator />
