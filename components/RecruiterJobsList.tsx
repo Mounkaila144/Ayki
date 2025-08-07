@@ -23,22 +23,7 @@ import {
   FileText
 } from "lucide-react";
 import JobApplicationsModal from "./JobApplicationsModal";
-
-interface JobOffer {
-  id: string;
-  title: string;
-  description?: string;
-  location?: string;
-  employmentType: string;
-  experienceLevel: string;
-  status: string;
-  createdAt: string;
-  viewCount?: number;
-  isFeatured?: boolean;
-  isUrgent?: boolean;
-  applicationCount?: number;
-  applications?: any[];
-}
+import { JobOffer } from '@/hooks/use-job-offers';
 
 interface RecruiterJobsListProps {
   jobs: JobOffer[];

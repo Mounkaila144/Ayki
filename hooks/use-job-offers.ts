@@ -18,8 +18,8 @@ export interface JobOffer {
   salaryPeriod?: string;
   salaryNegotiable: boolean;
   positions: number;
-  applicationDeadline?: Date;
-  startDate?: Date;
+  applicationDeadline?: string;
+  startDate?: string;
   status: string;
   languages?: string[];
   benefits_list?: string[];
@@ -29,12 +29,13 @@ export interface JobOffer {
   isActive: boolean;
   isFeatured: boolean;
   isUrgent: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
   recruiterId: string;
   companyId: string;
   company?: any;
   applications?: any[];
+  skills?: { id: string; name: string }[];
 }
 
 export const useJobOffers = () => {

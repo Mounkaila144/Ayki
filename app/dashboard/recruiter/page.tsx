@@ -223,8 +223,8 @@ export default function RecruiterDashboard() {
 
   // Utiliser les données du hook au lieu des données filtrées localement
   const filteredCandidates = data.candidates || [];
-  const allSkills = [...new Set((data.candidates || []).flatMap(c => c.skills || []))];
-  const allLocations = [...new Set((data.candidates || []).map(c => c.location).filter(Boolean))];
+  const allSkills = Array.from(new Set((data.candidates || []).flatMap(c => c.skills || [])));
+  const allLocations = Array.from(new Set((data.candidates || []).map(c => c.location).filter(Boolean)));
 
   if (!mounted) {
     return null;

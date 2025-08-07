@@ -11,7 +11,7 @@ import styles from './homepage.module.css';
 // Custom hook for intersection observer
 function useIntersectionObserver(options = {}) {
   const [isIntersecting, setIsIntersecting] = useState(false);
-  const ref = useRef(null);
+  const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const observer = new IntersectionObserver(([entry]) => {
@@ -29,7 +29,7 @@ function useIntersectionObserver(options = {}) {
     return () => observer.disconnect();
   }, []);
 
-  return [ref, isIntersecting];
+  return [ref, isIntersecting] as const;
 }
 
 export default function HomePage() {

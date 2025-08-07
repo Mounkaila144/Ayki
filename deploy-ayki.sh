@@ -98,13 +98,9 @@ if [[ ! -d "dist" ]]; then
 fi
 log_success "Build backend trouvé (fait en local)"
 
-# Exécution des migrations si nécessaire
-log_info "Vérification des migrations de base de données..."
-npm run migration:run || log_warning "Aucune migration à exécuter"
-
-# Exécution du seeding si nécessaire
-log_info "Seeding de la base de données..."
-npm run db:seed || log_warning "Seeding déjà effectué"
+# Note: Migrations et seeding gérés automatiquement par NestJS
+# TypeORM synchronize=true en développement
+log_info "Configuration base de données gérée par NestJS (synchronize actif)"
 
 # Arrêter l'ancien processus PM2 backend s'il existe
 log_info "Arrêt de l'ancien processus backend..."
