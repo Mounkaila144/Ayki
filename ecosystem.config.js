@@ -11,11 +11,11 @@ module.exports = {
       max_memory_restart: '1G',
       env: {
         NODE_ENV: 'development',
-        PORT: 3001
+        PORT: 3002
       },
       env_production: {
         NODE_ENV: 'production',
-        PORT: 3001
+        PORT: 3002
       },
       log_date_format: 'YYYY-MM-DD HH:mm Z',
       error_file: '/var/log/pm2/ayki-backend-error.log',
@@ -34,11 +34,11 @@ module.exports = {
       max_memory_restart: '512M',
       env: {
         NODE_ENV: 'development',
-        PORT: 3000
+        PORT: 3003
       },
       env_production: {
         NODE_ENV: 'production',
-        PORT: 3000
+        PORT: 3003
       },
       log_date_format: 'YYYY-MM-DD HH:mm Z',
       error_file: '/var/log/pm2/ayki-frontend-error.log',

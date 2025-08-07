@@ -64,7 +64,7 @@ check_service() {
 # Vérifier les services requis
 log_info "Vérification des services..."
 check_service mysql || exit 1
-check_service nginx || systemctl start nginx
+check_service apache2 || exit 1
 
 # Aller dans le répertoire du projet
 cd $PROJECT_DIR
@@ -181,28 +181,28 @@ sleep 5
 # Tests de connectivité
 log_info "Tests de connectivité..."
 
-# Test backend (port par défaut NestJS: 3001)
-if curl -s http://localhost:3001/api > /dev/null; then
-    log_success "Backend accessible sur le port 3001"
+# Test backend (port 3002 pour éviter les conflits)
+if curl -s http://localhost:3002/api > /dev/null; then
+    log_success "Backend accessible sur le port 3002"
 else
-    log_warning "Backend inaccessible sur le port 3001"
+    log_warning "Backend inaccessible sur le port 3002"
 fi
 
 # Test frontend (si mode serveur)
 if pm2 list | grep -q "ayki-frontend"; then
-    if curl -s http://localhost:3000 > /dev/null; then
-        log_success "Frontend accessible sur le port 3000"
+    if curl -s http://localhost:3003 > /dev/null; then
+        log_success "Frontend accessible sur le port 3003"
     else
-        log_warning "Frontend inaccessible sur le port 3000"
+        log_warning "Frontend inaccessible sur le port 3003"
     fi
 else
     log_info "Frontend en mode export statique - serveur web configuré"
 fi
 
-# Redémarrer Nginx pour s'assurer que la configuration est prise en compte
-log_info "Redémarrage de Nginx..."
-systemctl reload nginx
-log_success "Nginx redémarré"
+# Redémarrer Apache pour s'assurer que la configuration est prise en compte
+log_info "Redémarrage d'Apache..."
+systemctl reload apache2
+log_success "Apache redémarré"
 
 # ===================================
 # FINALISATION
@@ -222,10 +222,10 @@ fi
 log_success "Déploiement AYKI terminé avec succès!"
 echo "========================================"
 echo "📊 Résumé du déploiement:"
-echo "   - Backend API: http://localhost:3001/api"
-echo "   - Swagger UI: http://localhost:3001/api/docs"
+echo "   - Backend API: http://localhost:3002/api"
+echo "   - Swagger UI: http://localhost:3002/api/docs"
 if pm2 list | grep -q "ayki-frontend"; then
-    echo "   - Frontend: http://localhost:3000"
+    echo "   - Frontend: http://localhost:3003"
 else
     echo "   - Frontend: Serveur web statique configuré"
 fi
