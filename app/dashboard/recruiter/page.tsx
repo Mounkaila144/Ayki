@@ -48,6 +48,7 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { authUtils } from "@/lib/api";
+import { useRoleProtection } from "@/hooks/use-role-protection";
 import { useRecruiterDashboard, Candidate } from "@/hooks/use-recruiter-dashboard";
 import { useJobOffers, JobOffer } from "@/hooks/use-job-offers";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -68,6 +69,11 @@ export default function RecruiterDashboard() {
   const [editingJob, setEditingJob] = useState<JobOffer | null>(null);
 
   const router = useRouter();
+
+  // Protection basée sur le rôle - Seuls les recruteurs peuvent accéder à cette page
+  const { isAuthorized, isLoading: roleCheckLoading } = useRoleProtection({
+    requiredRole: 'recruiter'
+  });
 
   const {
     data,
@@ -91,13 +97,7 @@ export default function RecruiterDashboard() {
 
   useEffect(() => {
     setMounted(true);
-
-    // Vérifier l'authentification
-    if (!authUtils.isAuthenticated()) {
-      router.push('/auth/signin');
-      return;
-    }
-  }, [router]);
+  }, []);
 
   // Déclencher la recherche automatiquement quand les filtres changent
   useEffect(() => {
@@ -202,33 +202,27 @@ export default function RecruiterDashboard() {
     return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-700';
   };
 
-  // Affichage des erreurs d'authentification
-  if (!mounted) {
-    return <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-green-50/30 flex items-center justify-center">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-        <p className="mt-4 text-gray-600">Chargement...</p>
+  // Afficher l'écran de chargement pendant la vérification des rôles ou du montage
+  if (!mounted || roleCheckLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-green-50/30 to-blue-50/30 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Vérification des autorisations...</p>
+        </div>
       </div>
-    </div>;
+    );
   }
 
-  if (error && error.includes('non connecté')) {
-    return <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-green-50/30 flex items-center justify-center">
-      <div className="text-center">
-        <p className="text-red-600 mb-4">Erreur: Utilisateur non connecté</p>
-        <Button onClick={() => router.push('/auth/signin')}>Se connecter</Button>
-      </div>
-    </div>;
+  // Si l'utilisateur n'est pas autorisé, ne rien afficher (la redirection est gérée par le hook)
+  if (!isAuthorized) {
+    return null;
   }
 
   // Utiliser les données du hook au lieu des données filtrées localement
   const filteredCandidates = data.candidates || [];
   const allSkills = Array.from(new Set((data.candidates || []).flatMap(c => c.skills || [])));
   const allLocations = Array.from(new Set((data.candidates || []).map(c => c.location).filter(Boolean)));
-
-  if (!mounted) {
-    return null;
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-green-50/30 to-blue-50/30">

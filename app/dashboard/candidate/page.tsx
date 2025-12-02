@@ -45,6 +45,7 @@ import Link from "next/link";
 import { useCandidateDashboard } from "@/hooks/use-candidate-dashboard";
 import { authUtils } from "@/lib/api";
 import { useRouter } from "next/navigation";
+import { useRoleProtection } from "@/hooks/use-role-protection";
 import styles from '../dashboard.module.css';
 import JobListings from "@/components/JobListings";
 import JobListingsDemo from "@/components/JobListingsDemo";
@@ -106,6 +107,11 @@ export default function CandidateDashboard() {
   const [uploading, setUploading] = useState(false);
   const router = useRouter();
 
+  // Protection basée sur le rôle - Seuls les candidats peuvent accéder à cette page
+  const { isAuthorized, isLoading: roleCheckLoading } = useRoleProtection({
+    requiredRole: 'candidate'
+  });
+
   // Fonction utilitaire pour formater les dates d'expérience
   const formatExperienceDuration = (startDate: string, endDate: string | null, isCurrent: boolean) => {
     const start = new Date(startDate);
@@ -137,13 +143,7 @@ export default function CandidateDashboard() {
 
   useEffect(() => {
     setMounted(true);
-    
-    // Vérifier l'authentification
-    if (!authUtils.isAuthenticated()) {
-      router.push('/auth/signin');
-      return;
-    }
-  }, [router]);
+  }, []);
 
   const handleAddSkill = async () => {
     if (newSkill.trim() && !data.skills.some(skill => skill.skill?.name === newSkill.trim())) {
@@ -476,7 +476,20 @@ export default function CandidateDashboard() {
     }
   }, [data.profile]);
 
-  if (!mounted) {
+  // Afficher l'écran de chargement pendant la vérification des rôles ou du montage
+  if (!mounted || roleCheckLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-green-50/30 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Vérification des autorisations...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Si l'utilisateur n'est pas autorisé, ne rien afficher (la redirection est gérée par le hook)
+  if (!isAuthorized) {
     return null;
   }
 
