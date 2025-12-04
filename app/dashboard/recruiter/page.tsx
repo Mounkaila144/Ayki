@@ -55,7 +55,9 @@ import { useRoleProtection } from "@/hooks/use-role-protection";
 import { useRecruiterDashboard, Candidate } from "@/hooks/use-recruiter-dashboard";
 import { useJobOffers, JobOffer } from "@/hooks/use-job-offers";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import JobModal from "@/components/JobModal";
+import { generateSlug } from "@/hooks/use-public-profile";
 import styles from '../dashboard.module.css';
 
 export default function RecruiterDashboard() {
@@ -73,6 +75,8 @@ export default function RecruiterDashboard() {
   const [editingProfile, setEditingProfile] = useState(false);
   const [profileForm, setProfileForm] = useState<any>({});
   const [uploading, setUploading] = useState(false);
+  const [contactDialogOpen, setContactDialogOpen] = useState(false);
+  const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
 
   const router = useRouter();
 
@@ -151,6 +155,15 @@ export default function RecruiterDashboard() {
     } finally {
       setUploading(false);
     }
+  };
+
+  const handleContactCandidate = (candidate: Candidate) => {
+    setSelectedCandidate(candidate);
+    setContactDialogOpen(true);
+  };
+
+  const getProfileSlug = (candidate: Candidate) => {
+    return generateSlug(candidate.firstName, candidate.lastName, candidate.id);
   };
 
   // Déclencher la recherche automatiquement quand les filtres changent
@@ -716,17 +729,18 @@ export default function RecruiterDashboard() {
                     </div>
 
                     <div className="flex space-x-2 pt-2">
-                      <Link href={`/profile/${candidate.firstName.toLowerCase()}-${candidate.lastName.toLowerCase()}`} className="flex-1">
+                      <Link href={`/profile/${getProfileSlug(candidate)}`} className="flex-1">
                         <Button variant="outline" size="sm" className={`w-full ${styles['button-hover']}`}>
                           <Eye className="w-4 h-4 mr-2" />
                           Profil
                         </Button>
                       </Link>
-                      <Button size="sm" className={`bg-green-600 hover:bg-green-700 ${styles['button-hover']}`}>
-                        <Download className="w-4 h-4 mr-2" />
-                        CV
-                      </Button>
-                      <Button size="sm" variant="outline" className={styles['button-hover']}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className={`flex-1 ${styles['button-hover']}`}
+                        onClick={() => handleContactCandidate(candidate)}
+                      >
                         <MessageSquare className="w-4 h-4 mr-2" />
                         Contact
                       </Button>
@@ -996,6 +1010,72 @@ export default function RecruiterDashboard() {
         onSave={handleSaveJob}
         loading={jobsLoading}
       />
+
+      {/* Contact Dialog */}
+      <Dialog open={contactDialogOpen} onOpenChange={setContactDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageSquare className="w-5 h-5 text-green-600" />
+              Contacter {selectedCandidate?.firstName} {selectedCandidate?.lastName}
+            </DialogTitle>
+            <DialogDescription>
+              Coordonnées du candidat
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            {selectedCandidate?.phone && (
+              <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                <Phone className="w-5 h-5 text-green-600" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-700">Téléphone</p>
+                  <a
+                    href={`tel:${selectedCandidate.phone}`}
+                    className="text-lg font-semibold text-green-600 hover:underline"
+                  >
+                    {selectedCandidate.phone}
+                  </a>
+                </div>
+              </div>
+            )}
+            {selectedCandidate?.email && (
+              <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                <Mail className="w-5 h-5 text-blue-600" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-700">Email</p>
+                  <a
+                    href={`mailto:${selectedCandidate.email}`}
+                    className="text-lg font-semibold text-blue-600 hover:underline break-all"
+                  >
+                    {selectedCandidate.email}
+                  </a>
+                </div>
+              </div>
+            )}
+            {!selectedCandidate?.phone && !selectedCandidate?.email && (
+              <div className="text-center py-6 text-gray-500">
+                Aucune information de contact disponible
+              </div>
+            )}
+          </div>
+          <div className="flex justify-end space-x-2">
+            <Button variant="outline" onClick={() => setContactDialogOpen(false)}>
+              Fermer
+            </Button>
+            {selectedCandidate?.email && (
+              <Button
+                className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
+                onClick={() => {
+                  window.location.href = `mailto:${selectedCandidate.email}`;
+                }}
+              >
+                <Mail className="w-4 h-4 mr-2" />
+                Envoyer un email
+              </Button>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

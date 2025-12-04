@@ -23,6 +23,7 @@ export interface Candidate {
   email?: string;
   phone?: string;
   profileCompletion?: number;
+  cvUrl?: string;
 }
 
 export interface RecruiterProfile {
