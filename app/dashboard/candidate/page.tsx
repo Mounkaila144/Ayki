@@ -115,24 +115,20 @@ export default function CandidateDashboard() {
     requiredRole: 'candidate'
   });
 
-  // Générer le slug du profil pour les liens publics
-  const user = authUtils.getUser();
-  const profileSlug = user ? generateSlug(user.profile?.firstName || '', user.profile?.lastName || '', user.id) : '';
-
   // Fonction utilitaire pour formater les dates d'expérience
   const formatExperienceDuration = (startDate: string, endDate: string | null, isCurrent: boolean) => {
     const start = new Date(startDate);
     const end = endDate ? new Date(endDate) : new Date();
     const currentText = isCurrent ? 'Présent' : end.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
     const startText = start.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-    
+
     return `${startText} - ${currentText}`;
   };
-  
+
   // Utiliser le hook personnalisé pour les données
-  const { 
-    data, 
-    loading, 
+  const {
+    data,
+    loading,
     error,
     updateProfile,
     addSkill,
@@ -147,6 +143,14 @@ export default function CandidateDashboard() {
     updateEducation,
     deleteEducation
   } = useCandidateDashboard();
+
+  // Générer le slug du profil pour les liens publics
+  const user = authUtils.getUser();
+  // Utiliser les données du profil chargé par l'API si disponibles, sinon fallback sur localStorage
+  const firstName = data.profile?.firstName || user?.profile?.firstName || '';
+  const lastName = data.profile?.lastName || user?.profile?.lastName || '';
+  const userId = user?.id || '';
+  const profileSlug = (firstName && lastName && userId) ? generateSlug(firstName, lastName, userId) : '';
 
   useEffect(() => {
     setMounted(true);
@@ -1344,6 +1348,15 @@ export default function CandidateDashboard() {
                       variant="outline"
                       className={`w-full ${styles['button-hover']}`}
                       onClick={async () => {
+                        if (!profileSlug) {
+                          toast({
+                            title: "Erreur",
+                            description: "Veuillez d'abord compléter votre profil (prénom et nom)",
+                            variant: "destructive",
+                          });
+                          return;
+                        }
+
                         const success = await copyProfileLink(profileSlug);
                         if (success) {
                           toast({
@@ -1353,7 +1366,7 @@ export default function CandidateDashboard() {
                         } else {
                           toast({
                             title: "Erreur",
-                            description: "Impossible de copier le lien",
+                            description: "Impossible de copier le lien. Vérifiez la console pour plus de détails.",
                             variant: "destructive",
                           });
                         }

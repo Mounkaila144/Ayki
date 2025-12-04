@@ -145,30 +145,51 @@ export function getProfileUrl(slug: string): string {
  */
 export async function copyProfileLink(slug: string): Promise<boolean> {
   try {
+    // Vérifier que le slug est valide
+    if (!slug || slug.trim() === '') {
+      console.error('Slug invalide ou vide');
+      return false;
+    }
+
     const url = getProfileUrl(slug);
+    console.log('Tentative de copie du lien:', url);
 
-    if (navigator.clipboard && window.isSecureContext) {
-      await navigator.clipboard.writeText(url);
-      return true;
-    } else {
-      // Fallback pour les navigateurs plus anciens
-      const textArea = document.createElement('textarea');
-      textArea.value = url;
-      textArea.style.position = 'fixed';
-      textArea.style.left = '-999999px';
-      document.body.appendChild(textArea);
-      textArea.focus();
-      textArea.select();
-
+    // Méthode moderne avec Clipboard API
+    if (navigator.clipboard) {
       try {
-        document.execCommand('copy');
-        textArea.remove();
+        await navigator.clipboard.writeText(url);
+        console.log('Lien copié avec succès via Clipboard API');
         return true;
-      } catch (err) {
-        console.error('Erreur lors de la copie:', err);
-        textArea.remove();
+      } catch (clipboardErr) {
+        console.warn('Échec Clipboard API, tentative avec fallback:', clipboardErr);
+        // Continue avec le fallback ci-dessous
+      }
+    }
+
+    // Fallback pour les navigateurs plus anciens ou contextes non-sécurisés
+    const textArea = document.createElement('textarea');
+    textArea.value = url;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    textArea.style.top = '0';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+
+    try {
+      const successful = document.execCommand('copy');
+      textArea.remove();
+      if (successful) {
+        console.log('Lien copié avec succès via execCommand');
+        return true;
+      } else {
+        console.error('execCommand a échoué');
         return false;
       }
+    } catch (err) {
+      console.error('Erreur lors de execCommand:', err);
+      textArea.remove();
+      return false;
     }
   } catch (err) {
     console.error('Erreur lors de la copie du lien:', err);
@@ -181,19 +202,37 @@ export async function copyProfileLink(slug: string): Promise<boolean> {
  */
 export async function shareProfile(slug: string, name: string): Promise<boolean> {
   try {
+    // Vérifier que le slug est valide
+    if (!slug || slug.trim() === '') {
+      console.error('Slug invalide ou vide');
+      return false;
+    }
+
     const url = getProfileUrl(slug);
+    console.log('Tentative de partage du profil:', url);
 
     if (navigator.share) {
-      await navigator.share({
-        title: `Profil de ${name} sur AYKI`,
-        text: `Découvrez le profil professionnel de ${name}`,
-        url: url
-      });
-      return true;
-    } else {
-      // Fallback: copier dans le presse-papier
-      return await copyProfileLink(slug);
+      try {
+        await navigator.share({
+          title: `Profil de ${name} sur AYKI`,
+          text: `Découvrez le profil professionnel de ${name}`,
+          url: url
+        });
+        console.log('Profil partagé avec succès via Web Share API');
+        return true;
+      } catch (shareErr: any) {
+        // Si l'utilisateur annule le partage, c'est une erreur de type AbortError
+        if (shareErr.name === 'AbortError') {
+          console.log('Partage annulé par l\'utilisateur');
+          return false;
+        }
+        console.warn('Échec Web Share API, tentative avec fallback:', shareErr);
+        // Continue avec le fallback ci-dessous
+      }
     }
+
+    // Fallback: copier dans le presse-papier
+    return await copyProfileLink(slug);
   } catch (err) {
     console.error('Erreur lors du partage:', err);
     return false;
