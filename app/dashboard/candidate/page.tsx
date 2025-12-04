@@ -46,6 +46,8 @@ import { useCandidateDashboard } from "@/hooks/use-candidate-dashboard";
 import { authUtils } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import { useRoleProtection } from "@/hooks/use-role-protection";
+import { useMyProfileSlug, generateSlug, copyProfileLink } from "@/hooks/use-public-profile";
+import { useToast } from "@/hooks/use-toast";
 import styles from '../dashboard.module.css';
 import JobListings from "@/components/JobListings";
 import JobListingsDemo from "@/components/JobListingsDemo";
@@ -106,11 +108,16 @@ export default function CandidateDashboard() {
   });
   const [uploading, setUploading] = useState(false);
   const router = useRouter();
+  const { toast } = useToast();
 
   // Protection basée sur le rôle - Seuls les candidats peuvent accéder à cette page
   const { isAuthorized, isLoading: roleCheckLoading } = useRoleProtection({
     requiredRole: 'candidate'
   });
+
+  // Générer le slug du profil pour les liens publics
+  const user = authUtils.getUser();
+  const profileSlug = user ? generateSlug(user.profile?.firstName || '', user.profile?.lastName || '', user.id) : '';
 
   // Fonction utilitaire pour formater les dates d'expérience
   const formatExperienceDuration = (startDate: string, endDate: string | null, isCurrent: boolean) => {
@@ -863,34 +870,19 @@ export default function CandidateDashboard() {
                       />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="email" className="flex items-center gap-2">
-                          <Mail className="w-4 h-4" />
-                          Email
-                        </Label>
-                        <Input
-                          id="email"
-                          type="email"
-                          value={profileForm.email || ''}
-                          onChange={(e) => setProfileForm({...profileForm, email: e.target.value})}
-                          className={styles['input-focus']}
-                          disabled={!editingProfile}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="phone" className="flex items-center gap-2">
-                          <Phone className="w-4 h-4" />
-                          Téléphone
-                        </Label>
-                        <Input
-                          id="phone"
-                          value={profileForm.phone || ''}
-                          onChange={(e) => setProfileForm({...profileForm, phone: e.target.value})}
-                          className={styles['input-focus']}
-                          disabled={!editingProfile}
-                        />
-                      </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="email" className="flex items-center gap-2">
+                        <Mail className="w-4 h-4" />
+                        Email
+                      </Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={profileForm.email || ''}
+                        onChange={(e) => setProfileForm({...profileForm, email: e.target.value})}
+                        className={styles['input-focus']}
+                        disabled={!editingProfile}
+                      />
                     </div>
 
                     <div className="space-y-2">
@@ -1220,42 +1212,6 @@ export default function CandidateDashboard() {
                       </div>
                     </div>
 
-                    {/* Skill Categories */}
-                    <div className="space-y-4">
-                      <h4 className="font-medium text-gray-900">Catégories de Compétences</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="p-4 border rounded-lg bg-blue-50/50">
-                          <h5 className="font-medium text-blue-700 mb-2">Frontend</h5>
-                          <div className="flex flex-wrap gap-1">
-                            {skills.filter(skill => ['React', 'TypeScript'].includes(skill.skill?.name || skill.name)).map(skill => (
-                              <Badge key={skill.id} variant="outline" className="text-xs">
-                                {skill.skill?.name || skill.name}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                        <div className="p-4 border rounded-lg bg-green-50/50">
-                          <h5 className="font-medium text-green-700 mb-2">Backend</h5>
-                          <div className="flex flex-wrap gap-1">
-                            {skills.filter(skill => ['Node.js', 'Python', 'MongoDB'].includes(skill.skill?.name || skill.name)).map(skill => (
-                              <Badge key={skill.id} variant="outline" className="text-xs">
-                                {skill.skill?.name || skill.name}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                        <div className="p-4 border rounded-lg bg-purple-50/50">
-                          <h5 className="font-medium text-purple-700 mb-2">DevOps</h5>
-                          <div className="flex flex-wrap gap-1">
-                            {skills.filter(skill => ['Docker', 'AWS'].includes(skill.skill?.name || skill.name)).map(skill => (
-                              <Badge key={skill.id} variant="outline" className="text-xs">
-                                {skill.skill?.name || skill.name}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -1377,14 +1333,32 @@ export default function CandidateDashboard() {
                   </div>
 
                   <div className="space-y-3">
-                    <Link href={`/profile/${profile?.firstName?.toLowerCase() || 'user'}-${profile?.lastName?.toLowerCase() || ''}`}>
+                    <Link href={`/profile/${profileSlug}`}>
                       <Button className={`w-full bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 ${styles['button-hover']}`}>
                         <Eye className="w-4 h-4 mr-2" />
                         Voir le profil public
                       </Button>
                     </Link>
 
-                    <Button variant="outline" className={`w-full ${styles['button-hover']}`}>
+                    <Button
+                      variant="outline"
+                      className={`w-full ${styles['button-hover']}`}
+                      onClick={async () => {
+                        const success = await copyProfileLink(profileSlug);
+                        if (success) {
+                          toast({
+                            title: "Lien copié !",
+                            description: "Le lien de votre profil a été copié dans le presse-papier",
+                          });
+                        } else {
+                          toast({
+                            title: "Erreur",
+                            description: "Impossible de copier le lien",
+                            variant: "destructive",
+                          });
+                        }
+                      }}
+                    >
                       <Share2 className="w-4 h-4 mr-2" />
                       Partager le profil
                     </Button>

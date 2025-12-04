@@ -263,7 +263,7 @@ export default function HomePage() {
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-green-400">100%</div>
-              <div className="text-sm text-gray-400">Gratuit</div>
+              <div className="text-sm text-gray-400">accessible</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-purple-400">∞</div>
