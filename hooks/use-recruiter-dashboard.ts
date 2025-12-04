@@ -267,6 +267,29 @@ export const useRecruiterDashboard = () => {
     }
   };
 
+  const updateProfile = async (profileData: any) => {
+    try {
+      const updatedProfile = await apiClient.updateUserProfile(profileData);
+      setData(prev => ({ ...prev, profile: { ...prev.profile, ...updatedProfile } as RecruiterProfile }));
+      return updatedProfile;
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour du profil:', error);
+      throw error;
+    }
+  };
+
+  const uploadProfilePhoto = async (file: File) => {
+    try {
+      const result = await apiClient.uploadProfilePhoto(file);
+      // Rafraîchir le profil pour obtenir la nouvelle photo
+      await fetchDashboardData();
+      return result;
+    } catch (error) {
+      console.error('Erreur lors de l\'upload de la photo:', error);
+      throw error;
+    }
+  };
+
   useEffect(() => {
     fetchDashboardData();
   }, [fetchDashboardData]);
@@ -280,5 +303,7 @@ export const useRecruiterDashboard = () => {
     toggleBookmark,
     loadMoreCandidates,
     refetch: fetchDashboardData,
+    updateProfile,
+    uploadProfilePhoto,
   };
 };

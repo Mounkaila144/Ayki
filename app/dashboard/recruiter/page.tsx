@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import RecruiterJobsList from "@/components/RecruiterJobsList";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -43,7 +44,9 @@ import {
   FileText,
   Send,
   Plus,
-  Trash2
+  Trash2,
+  Edit3,
+  Upload
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -67,6 +70,9 @@ export default function RecruiterDashboard() {
   const [sortBy, setSortBy] = useState('match');
   const [showJobModal, setShowJobModal] = useState(false);
   const [editingJob, setEditingJob] = useState<JobOffer | null>(null);
+  const [editingProfile, setEditingProfile] = useState(false);
+  const [profileForm, setProfileForm] = useState<any>({});
+  const [uploading, setUploading] = useState(false);
 
   const router = useRouter();
 
@@ -82,7 +88,9 @@ export default function RecruiterDashboard() {
     searchCandidates,
     toggleBookmark,
     loadMoreCandidates,
-    refetch
+    refetch,
+    updateProfile,
+    uploadProfilePhoto
   } = useRecruiterDashboard();
 
   const {
@@ -98,6 +106,52 @@ export default function RecruiterDashboard() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Initialiser le formulaire avec les données du profil
+  useEffect(() => {
+    if (data.profile) {
+      setProfileForm(data.profile);
+    }
+  }, [data.profile]);
+
+  const handleSaveProfile = async () => {
+    try {
+      await updateProfile(profileForm);
+      setEditingProfile(false);
+      alert('Profil mis à jour avec succès !');
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde du profil:', error);
+      alert('Erreur lors de la sauvegarde du profil');
+    }
+  };
+
+  const handleProfilePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Vérifier que c'est bien une image
+    if (!file.type.startsWith('image/')) {
+      alert('Veuillez sélectionner un fichier image');
+      return;
+    }
+
+    // Vérifier la taille (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('L\'image est trop volumineuse. Taille maximum : 5MB');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      await uploadProfilePhoto(file);
+      alert('Photo de profil mise à jour avec succès !');
+    } catch (error) {
+      console.error('Erreur lors de l\'upload:', error);
+      alert('Erreur lors de l\'upload de la photo');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   // Déclencher la recherche automatiquement quand les filtres changent
   useEffect(() => {
@@ -396,9 +450,10 @@ export default function RecruiterDashboard() {
         </div>
         {/* Tabs Navigation */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className={`grid w-full grid-cols-4 ${styles['slide-in-left']}`} style={{ animationDelay: '0.2s' }}>
+          <TabsList className={`grid w-full grid-cols-3 ${styles['slide-in-left']}`} style={{ animationDelay: '0.2s' }}>
             <TabsTrigger value="search" className={styles['tab-hover']}>🔍 Recherche</TabsTrigger>
             <TabsTrigger value="bookmarks" className={styles['tab-hover']}>⭐ Annonces</TabsTrigger>
+            <TabsTrigger value="profile" className={styles['tab-hover']}>👤 Mon Profil</TabsTrigger>
           </TabsList>
 
           {/* Search Tab */}
@@ -722,6 +777,169 @@ export default function RecruiterDashboard() {
                 getJobStatusColor={getJobStatusColor}
                 getJobStatusLabel={getJobStatusLabel}
               />
+            </Card>
+          </TabsContent>
+
+          {/* Profile Tab */}
+          <TabsContent value="profile" className={`space-y-6 ${styles['fade-in']}`}>
+            <Card className={styles['card-hover']}>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <User className="w-5 h-5 mr-2 text-green-500" />
+                    Informations professionnelles
+                  </div>
+                  {editingProfile ? (
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={handleSaveProfile} className={styles['button-hover']}>
+                        Sauvegarder
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => setEditingProfile(false)} className={styles['button-hover']}>
+                        Annuler
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button size="sm" variant="outline" onClick={() => setEditingProfile(true)} className={styles['button-hover']}>
+                      <Edit3 className="w-4 h-4 mr-2" />
+                      Modifier
+                    </Button>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Section photo de profil */}
+                <div className="flex items-center space-x-6 p-4 bg-gray-50 rounded-lg">
+                  <div className="relative">
+                    <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                      {data.profile?.avatar ? (
+                        <img
+                          src={data.profile.avatar.startsWith('/uploads/') ? `http://localhost:3001${data.profile.avatar}` : data.profile.avatar}
+                          alt="Photo de profil"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <User className="w-10 h-10 text-gray-400" />
+                      )}
+                    </div>
+                    {editingProfile && (
+                      <label className="absolute -bottom-2 -right-2 bg-green-500 text-white rounded-full p-1 cursor-pointer hover:bg-green-600 transition-colors">
+                        <Upload className="w-4 h-4" />
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleProfilePhotoUpload}
+                          className="hidden"
+                          disabled={uploading}
+                        />
+                      </label>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-medium text-gray-900">Photo de profil</h3>
+                    <p className="text-sm text-gray-500">
+                      {data.profile?.avatar
+                        ? 'Cliquez sur l\'icône pour changer votre photo'
+                        : 'Ajoutez une photo pour personnaliser votre profil'
+                      }
+                    </p>
+                    {uploading && (
+                      <div className="flex items-center mt-2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-500 mr-2"></div>
+                        <span className="text-sm text-green-600">Upload en cours...</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName" className="flex items-center gap-2">
+                      <User className="w-4 h-4" />
+                      Prénom
+                    </Label>
+                    <Input
+                      id="firstName"
+                      value={profileForm.firstName || ''}
+                      onChange={(e) => setProfileForm({...profileForm, firstName: e.target.value})}
+                      className={styles['input-focus']}
+                      disabled={!editingProfile}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName" className="flex items-center gap-2">
+                      <User className="w-4 h-4" />
+                      Nom
+                    </Label>
+                    <Input
+                      id="lastName"
+                      value={profileForm.lastName || ''}
+                      onChange={(e) => setProfileForm({...profileForm, lastName: e.target.value})}
+                      className={styles['input-focus']}
+                      disabled={!editingProfile}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="flex items-center gap-2">
+                    <Mail className="w-4 h-4" />
+                    Email professionnel
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={profileForm.email || ''}
+                    onChange={(e) => setProfileForm({...profileForm, email: e.target.value})}
+                    className={styles['input-focus']}
+                    disabled={!editingProfile}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="company" className="flex items-center gap-2">
+                    <Building2 className="w-4 h-4" />
+                    Entreprise
+                  </Label>
+                  <Input
+                    id="company"
+                    value={profileForm.company || ''}
+                    onChange={(e) => setProfileForm({...profileForm, company: e.target.value})}
+                    className={styles['input-focus']}
+                    disabled={!editingProfile}
+                    placeholder="Nom de votre entreprise"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="position" className="flex items-center gap-2">
+                    <Briefcase className="w-4 h-4" />
+                    Poste / Fonction
+                  </Label>
+                  <Input
+                    id="position"
+                    value={profileForm.position || ''}
+                    onChange={(e) => setProfileForm({...profileForm, position: e.target.value})}
+                    className={styles['input-focus']}
+                    disabled={!editingProfile}
+                    placeholder="Ex: Responsable RH, Recruteur Senior..."
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="phone" className="flex items-center gap-2">
+                    <Phone className="w-4 h-4" />
+                    Téléphone
+                  </Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    value={profileForm.phone || ''}
+                    onChange={(e) => setProfileForm({...profileForm, phone: e.target.value})}
+                    className={styles['input-focus']}
+                    disabled={!editingProfile}
+                  />
+                </div>
+              </CardContent>
             </Card>
           </TabsContent>
 
