@@ -614,10 +614,18 @@ export default function RecruiterDashboard() {
                   <CardHeader className="pb-4">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center space-x-3">
-                        <div className={`w-14 h-14 bg-gradient-to-br from-green-600 to-blue-600 rounded-full flex items-center justify-center ${styles['pulse-animation']} shadow-lg`}>
-                          <span className="text-lg font-bold text-white">
-                            {candidate.firstName[0]}{candidate.lastName[0]}
-                          </span>
+                        <div className={`w-14 h-14 bg-gradient-to-br from-green-600 to-blue-600 rounded-full flex items-center justify-center ${styles['pulse-animation']} shadow-lg overflow-hidden`}>
+                          {candidate.avatar ? (
+                            <img
+                              src={candidate.avatar.startsWith('/uploads/') ? `http://localhost:3001${candidate.avatar}` : candidate.avatar}
+                              alt={`${candidate.firstName} ${candidate.lastName}`}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <span className="text-lg font-bold text-white">
+                              {candidate.firstName[0]}{candidate.lastName[0]}
+                            </span>
+                          )}
                         </div>
                         <div className="flex-1">
                           <CardTitle className="text-lg flex items-center gap-2">
