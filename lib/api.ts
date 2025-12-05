@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export interface SignInRequest {
   phone: string;
@@ -60,12 +60,14 @@ class ApiClient {
     };
 
     // Add auth token if available
-    const token = localStorage.getItem('auth_token');
-    if (token) {
-      config.headers = {
-        ...config.headers,
-        Authorization: `Bearer ${token}`,
-      };
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('auth_token');
+      if (token) {
+        config.headers = {
+          ...config.headers,
+          Authorization: `Bearer ${token}`,
+        };
+      }
     }
 
     try {
@@ -281,13 +283,16 @@ class ApiClient {
     formData.append('file', file);
     formData.append('type', type);
 
-    const token = localStorage.getItem('auth_token');
-    console.log('Auth token present:', !!token);
-    console.log('Token preview:', token ? token.substring(0, 20) + '...' : 'NO TOKEN');
-    
+    let token = null;
+    if (typeof window !== 'undefined') {
+      token = localStorage.getItem('auth_token');
+      console.log('Auth token present:', !!token);
+      console.log('Token preview:', token ? token.substring(0, 20) + '...' : 'NO TOKEN');
+    }
+
     try {
       console.log('Sending request to:', `${this.baseURL}/documents/upload`);
-      
+
       const response = await fetch(`${this.baseURL}/documents/upload`, {
         method: 'POST',
         headers: {
@@ -380,6 +385,11 @@ class ApiClient {
     return this.request(`/candidates/${candidateId}`);
   }
 
+  // Public profile endpoints (no auth required)
+  async getPublicProfile(slug: string): Promise<any> {
+    return this.request(`/profiles/public/${slug}`);
+  }
+
   // Admin job management endpoints
   async getAdminJobs(filters: any = {}): Promise<any> {
     const queryString = filters ? new URLSearchParams(filters).toString() : '';
@@ -417,40 +427,117 @@ class ApiClient {
       body: JSON.stringify(jobData),
     });
   }
+
+  // Generic HTTP methods
+  async get<T = any>(endpoint: string, config?: RequestInit): Promise<{ data: T }> {
+    const result = await this.request<T>(endpoint, {
+      method: 'GET',
+      ...config,
+    });
+    return { data: result };
+  }
+
+  async post<T = any>(endpoint: string, data?: any, config?: RequestInit): Promise<{ data: T }> {
+    const isFormData = data instanceof FormData;
+    const headers = isFormData
+      ? { ...(config?.headers || {}) }
+      : { 'Content-Type': 'application/json', ...(config?.headers || {}) };
+
+    const result = await this.request<T>(endpoint, {
+      method: 'POST',
+      body: isFormData ? data : JSON.stringify(data),
+      ...config,
+      headers,
+    });
+    return { data: result };
+  }
+
+  async patch<T = any>(endpoint: string, data?: any, config?: RequestInit): Promise<{ data: T }> {
+    const isFormData = data instanceof FormData;
+    const headers = isFormData
+      ? { ...(config?.headers || {}) }
+      : { 'Content-Type': 'application/json', ...(config?.headers || {}) };
+
+    const result = await this.request<T>(endpoint, {
+      method: 'PATCH',
+      body: isFormData ? data : JSON.stringify(data),
+      ...config,
+      headers,
+    });
+    return { data: result };
+  }
+
+  async put<T = any>(endpoint: string, data?: any, config?: RequestInit): Promise<{ data: T }> {
+    const isFormData = data instanceof FormData;
+    const headers = isFormData
+      ? { ...(config?.headers || {}) }
+      : { 'Content-Type': 'application/json', ...(config?.headers || {}) };
+
+    const result = await this.request<T>(endpoint, {
+      method: 'PUT',
+      body: isFormData ? data : JSON.stringify(data),
+      ...config,
+      headers,
+    });
+    return { data: result };
+  }
+
+  async delete<T = any>(endpoint: string, config?: RequestInit): Promise<{ data: T }> {
+    const result = await this.request<T>(endpoint, {
+      method: 'DELETE',
+      ...config,
+    });
+    return { data: result };
+  }
 }
 
 export const apiClient = new ApiClient();
+export const api = apiClient; // Alias for convenience
 
 // Auth utilities
 export const authUtils = {
   setToken: (token: string) => {
-    localStorage.setItem('auth_token', token);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('auth_token', token);
+    }
   },
-  
+
   getToken: (): string | null => {
-    return localStorage.getItem('auth_token');
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('auth_token');
+    }
+    return null;
   },
-  
+
   removeToken: () => {
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('user_data');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('user_data');
+    }
   },
-  
+
   setUser: (user: any) => {
-    localStorage.setItem('user_data', JSON.stringify(user));
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('user_data', JSON.stringify(user));
+    }
   },
-  
+
   getUser: () => {
-    const userData = localStorage.getItem('user_data');
-    return userData ? JSON.parse(userData) : null;
+    if (typeof window !== 'undefined') {
+      const userData = localStorage.getItem('user_data');
+      return userData ? JSON.parse(userData) : null;
+    }
+    return null;
   },
-  
+
   isAuthenticated: (): boolean => {
     return !!authUtils.getToken();
   },
-  
+
   logout: () => {
     authUtils.removeToken();
-    window.location.href = '/auth/signin';
+    if (typeof window !== 'undefined') {
+      window.location.href = '/auth/signin';
+    }
   }
 };

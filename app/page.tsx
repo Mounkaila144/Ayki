@@ -7,6 +7,15 @@ import { Users, Building2, Search, FileUser, Sparkles } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import styles from './homepage.module.css';
+import { api } from '@/lib/api';
+
+interface Partner {
+  id: string;
+  name: string;
+  logo: string;
+  order: number;
+  isActive: boolean;
+}
 
 // Custom hook for intersection observer
 function useIntersectionObserver(options = {}) {
@@ -36,6 +45,31 @@ export default function HomePage() {
   const [heroRef, heroInView] = useIntersectionObserver();
   const [featuresRef, featuresInView] = useIntersectionObserver();
   const [ctaRef, ctaInView] = useIntersectionObserver();
+  const [partnersRef, partnersInView] = useIntersectionObserver();
+  const [partners, setPartners] = useState<Partner[]>([]);
+
+  useEffect(() => {
+    const loadPartners = async () => {
+      try {
+        const response = await api.get('/partners/active');
+        console.log('Partenaires chargés:', response.data);
+        setPartners(response.data);
+      } catch (error) {
+        console.error('Erreur lors du chargement des partenaires:', error);
+        // En cas d'erreur, essayons sans authentification
+        try {
+          const fallbackResponse = await fetch('http://localhost:3001/partners/active');
+          const data = await fallbackResponse.json();
+          console.log('Partenaires chargés (fallback):', data);
+          setPartners(data);
+        } catch (fallbackError) {
+          console.error('Erreur fallback:', fallbackError);
+        }
+      }
+    };
+
+    loadPartners();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 overflow-hidden">
@@ -234,6 +268,67 @@ export default function HomePage() {
               </p>
             </div>
           </div>
+        </div>
+
+        {/* Partners Section - Infinite Scroll */}
+        <div
+          ref={partnersRef}
+          className={`mt-32 transition-all duration-1000 delay-700 ${
+            partnersInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+          }`}
+        >
+          <div className="text-center mb-12">
+            <h3 className="text-3xl font-bold text-gray-900 mb-4">Ils nous font confiance</h3>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Nos partenaires qui soutiennent AYKI dans sa mission de connecter les talents aux opportunités
+            </p>
+          </div>
+
+          {partners.length > 0 ? (
+            <div className="bg-white rounded-2xl shadow-lg py-8 border border-gray-100 overflow-hidden">
+              <div className="relative">
+                {/* Animation de défilement infini */}
+                <div className="flex animate-scroll">
+                  {/* Premier ensemble de logos */}
+                  {partners.map((partner) => (
+                    <div
+                      key={`first-${partner.id}`}
+                      className="flex-shrink-0 mx-8 flex items-center justify-center"
+                      title={partner.name}
+                    >
+                      <Image
+                        src={`http://localhost:3001${partner.logo}`}
+                        alt={partner.name}
+                        width={150}
+                        height={80}
+                        className="object-contain grayscale hover:grayscale-0 transition-all duration-300 max-h-20 w-auto"
+                      />
+                    </div>
+                  ))}
+                  {/* Duplication pour un défilement infini sans coupure */}
+                  {partners.map((partner) => (
+                    <div
+                      key={`second-${partner.id}`}
+                      className="flex-shrink-0 mx-8 flex items-center justify-center"
+                      title={partner.name}
+                    >
+                      <Image
+                        src={`http://localhost:3001${partner.logo}`}
+                        alt={partner.name}
+                        width={150}
+                        height={80}
+                        className="object-contain grayscale hover:grayscale-0 transition-all duration-300 max-h-20 w-auto"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-white rounded-2xl shadow-lg py-12 border border-gray-100 text-center">
+              <p className="text-gray-500">Aucun partenaire pour le moment. Ajoutez-en depuis l'interface admin.</p>
+            </div>
+          )}
         </div>
       </main>
 

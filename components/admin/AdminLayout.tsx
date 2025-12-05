@@ -3,17 +3,18 @@
 import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { 
-  LayoutDashboard, 
-  Users, 
-  Building2, 
-  Settings, 
+import {
+  LayoutDashboard,
+  Users,
+  Building2,
+  Settings,
   LogOut,
   Menu,
   X,
   Shield,
   Briefcase,
-  FileCheck
+  FileCheck,
+  Handshake
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { authUtils } from '@/lib/api';
@@ -47,6 +48,11 @@ const navigation = [
     name: 'Annonces Recruteur',
     href: '/admin/recruiter-jobs',
     icon: FileCheck,
+  },
+  {
+    name: 'Partenaires',
+    href: '/admin/partners',
+    icon: Handshake,
   },
   {
     name: 'Paramètres',
