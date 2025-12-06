@@ -101,7 +101,7 @@ export default function AdminPartnersPage() {
       order: partner.order,
       isActive: partner.isActive,
     });
-    setLogoPreview(`http://localhost:3001${partner.logo}`);
+    setLogoPreview(`${process.env.NEXT_PUBLIC_API_URL}${partner.logo}`);
     setShowForm(true);
   };
 
@@ -296,7 +296,7 @@ export default function AdminPartnersPage() {
 
                   <div className="mb-3 bg-gray-100 rounded p-2 h-24 flex items-center justify-center">
                     <img
-                      src={`http://localhost:3001${partner.logo}`}
+                      src={`${process.env.NEXT_PUBLIC_API_URL}${partner.logo}`}
                       alt={partner.name}
                       className="max-h-20 w-auto object-contain"
                     />

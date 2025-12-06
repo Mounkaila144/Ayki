@@ -356,7 +356,7 @@ const JobApplicationsModal: React.FC<JobApplicationsModalProps> = ({
                           {application.candidate.profile?.avatar ? (
                             <img
                               src={application.candidate.profile.avatar.startsWith('/uploads/')
-                                ? `http://localhost:3001${application.candidate.profile.avatar}`
+                                ? `${process.env.NEXT_PUBLIC_API_URL}${application.candidate.profile.avatar}`
                                 : application.candidate.profile.avatar}
                               alt="Photo de profil"
                               className="w-full h-full object-cover"
@@ -493,7 +493,7 @@ const JobApplicationsModal: React.FC<JobApplicationsModalProps> = ({
                     {selectedApplication.candidate.profile?.avatar ? (
                       <img
                         src={selectedApplication.candidate.profile.avatar.startsWith('/uploads/')
-                          ? `http://localhost:3001${selectedApplication.candidate.profile.avatar}`
+                          ? `${process.env.NEXT_PUBLIC_API_URL}${selectedApplication.candidate.profile.avatar}`
                           : selectedApplication.candidate.profile.avatar}
                         alt="Photo de profil"
                         className="w-full h-full object-cover"
@@ -589,7 +589,7 @@ const JobApplicationsModal: React.FC<JobApplicationsModalProps> = ({
                     {candidateDetails.avatar ? (
                       <img
                         src={candidateDetails.avatar.startsWith('/uploads/')
-                          ? `http://localhost:3001${candidateDetails.avatar}`
+                          ? `${process.env.NEXT_PUBLIC_API_URL}${candidateDetails.avatar}`
                           : candidateDetails.avatar}
                         alt="Photo de profil"
                         className="w-full h-full object-cover"

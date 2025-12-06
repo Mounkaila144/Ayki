@@ -574,7 +574,7 @@ export default function CandidateDashboard() {
                     <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-green-600 rounded-full flex items-center justify-center overflow-hidden ring-2 ring-white shadow-md">
                       {data.profile?.avatar ? (
                         <img
-                          src={data.profile.avatar.startsWith('/uploads/') ? `http://localhost:3001${data.profile.avatar}` : data.profile.avatar}
+                          src={data.profile.avatar.startsWith('/uploads/') ? `${process.env.NEXT_PUBLIC_API_URL}${data.profile.avatar}` : data.profile.avatar}
                           alt="Photo de profil"
                           className="w-full h-full object-cover"
                         />
@@ -793,7 +793,7 @@ export default function CandidateDashboard() {
                         <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
                           {data.profile?.avatar ? (
                             <img
-                              src={data.profile.avatar.startsWith('/uploads/') ? `http://localhost:3001${data.profile.avatar}` : data.profile.avatar}
+                              src={data.profile.avatar.startsWith('/uploads/') ? `${process.env.NEXT_PUBLIC_API_URL}${data.profile.avatar}` : data.profile.avatar}
                               alt="Photo de profil"
                               className="w-full h-full object-cover" 
                             />
@@ -1243,7 +1243,7 @@ export default function CandidateDashboard() {
                     <div className={`w-24 h-24 bg-gradient-to-br from-blue-600 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4 ${styles['pulse-animation']} shadow-lg overflow-hidden`}>
                       {data.profile?.avatar ? (
                         <img
-                          src={data.profile.avatar.startsWith('/uploads/') ? `http://localhost:3001${data.profile.avatar}` : data.profile.avatar}
+                          src={data.profile.avatar.startsWith('/uploads/') ? `${process.env.NEXT_PUBLIC_API_URL}${data.profile.avatar}` : data.profile.avatar}
                           alt="Photo de profil"
                           className="w-full h-full object-cover"
                         />

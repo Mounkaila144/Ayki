@@ -58,7 +58,7 @@ export default function HomePage() {
         console.error('Erreur lors du chargement des partenaires:', error);
         // En cas d'erreur, essayons sans authentification
         try {
-          const fallbackResponse = await fetch('http://localhost:3001/partners/active');
+          const fallbackResponse = await fetch('${process.env.NEXT_PUBLIC_API_URL}/partners/active');
           const data = await fallbackResponse.json();
           console.log('Partenaires chargés (fallback):', data);
           setPartners(data);
@@ -297,7 +297,7 @@ export default function HomePage() {
                       title={partner.name}
                     >
                       <Image
-                        src={`http://localhost:3001${partner.logo}`}
+                        src={`${process.env.NEXT_PUBLIC_API_URL}${partner.logo}`}
                         alt={partner.name}
                         width={150}
                         height={80}
@@ -313,7 +313,7 @@ export default function HomePage() {
                       title={partner.name}
                     >
                       <Image
-                        src={`http://localhost:3001${partner.logo}`}
+                        src={`${process.env.NEXT_PUBLIC_API_URL}${partner.logo}`}
                         alt={partner.name}
                         width={150}
                         height={80}

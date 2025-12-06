@@ -195,7 +195,7 @@ export default function ProfilePage() {
               <div className="w-24 h-24 bg-gradient-to-br from-blue-600 to-green-600 rounded-full flex items-center justify-center overflow-hidden shadow-lg">
                 {profile.avatar ? (
                   <img
-                    src={profile.avatar.startsWith('/uploads/') ? `http://localhost:3001${profile.avatar}` : profile.avatar}
+                    src={profile.avatar.startsWith('/uploads/') ? `${process.env.NEXT_PUBLIC_API_URL}${profile.avatar}` : profile.avatar}
                     alt={`${profile.firstName} ${profile.lastName}`}
                     className="w-full h-full object-cover"
                   />
