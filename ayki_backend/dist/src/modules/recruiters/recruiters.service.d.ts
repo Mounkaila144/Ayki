@@ -25,6 +25,7 @@ export declare class RecruitersService {
     }>;
     searchCandidates(recruiterId: string, filters: any): Promise<{
         data: ({
+            matchScore: number;
             id: string;
             firstName: string;
             lastName: string;
@@ -41,11 +42,12 @@ export declare class RecruitersService {
             education: string;
             company: string;
             isBookmarked: boolean;
-            matchScore: number;
             profileCompletion: number;
+            cvUrl: string | null;
+            phone: string | null;
+            email: string | null;
         } | {
-            email: string;
-            phone: string;
+            matchScore: number;
             experiences: Experience[];
             educations: Education[];
             documents: import("../../entities").Document[];
@@ -65,8 +67,10 @@ export declare class RecruitersService {
             education: string;
             company: string;
             isBookmarked: boolean;
-            matchScore: number;
             profileCompletion: number;
+            cvUrl: string | null;
+            phone: string | null;
+            email: string | null;
         })[];
         total: number;
         page: number;
@@ -92,9 +96,10 @@ export declare class RecruitersService {
         isBookmarked: boolean;
         matchScore: number;
         profileCompletion: number;
+        cvUrl: string | null;
+        phone: string | null;
+        email: string | null;
     } | {
-        email: string;
-        phone: string;
         experiences: Experience[];
         educations: Education[];
         documents: import("../../entities").Document[];
@@ -116,6 +121,9 @@ export declare class RecruitersService {
         isBookmarked: boolean;
         matchScore: number;
         profileCompletion: number;
+        cvUrl: string | null;
+        phone: string | null;
+        email: string | null;
     })[]>;
     toggleCandidateBookmark(recruiterId: string, candidateId: string): Promise<{
         bookmarked: boolean;
@@ -140,9 +148,10 @@ export declare class RecruitersService {
         isBookmarked: boolean;
         matchScore: number;
         profileCompletion: number;
+        cvUrl: string | null;
+        phone: string | null;
+        email: string | null;
     } | {
-        email: string;
-        phone: string;
         experiences: Experience[];
         educations: Education[];
         documents: import("../../entities").Document[];
@@ -164,6 +173,9 @@ export declare class RecruitersService {
         isBookmarked: boolean;
         matchScore: number;
         profileCompletion: number;
+        cvUrl: string | null;
+        phone: string | null;
+        email: string | null;
     }>;
     private transformUserToCandidate;
     private getAvailabilityLabel;

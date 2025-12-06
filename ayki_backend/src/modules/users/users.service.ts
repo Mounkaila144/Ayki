@@ -33,7 +33,7 @@ export class UsersService {
   async findOne(id: string) {
     return this.userRepository.findOne({
       where: { id },
-      relations: ['profile', 'company', 'experiences', 'educations', 'skills'],
+      relations: ['profile', 'company', 'experiences', 'educations', 'skills', 'skills.skill'],
     });
   }
 

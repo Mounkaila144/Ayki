@@ -18,6 +18,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { RecruitersModule } from './modules/recruiters/recruiters.module';
+import { PartnersModule } from './modules/partners/partners.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { RecruitersModule } from './modules/recruiters/recruiters.module';
     AnalyticsModule,
     AdminModule,
     RecruitersModule,
+    PartnersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

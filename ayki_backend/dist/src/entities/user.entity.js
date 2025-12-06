@@ -15,7 +15,7 @@ const user_profile_entity_1 = require("./user-profile.entity");
 const company_entity_1 = require("./company.entity");
 const experience_entity_1 = require("./experience.entity");
 const education_entity_1 = require("./education.entity");
-const skill_entity_1 = require("./skill.entity");
+const user_skill_entity_1 = require("./user-skill.entity");
 const job_offer_entity_1 = require("./job-offer.entity");
 const application_entity_1 = require("./application.entity");
 const bookmark_entity_1 = require("./bookmark.entity");
@@ -139,12 +139,7 @@ __decorate([
     __metadata("design:type", Array)
 ], User.prototype, "educations", void 0);
 __decorate([
-    (0, typeorm_1.ManyToMany)(() => skill_entity_1.Skill, (skill) => skill.users),
-    (0, typeorm_1.JoinTable)({
-        name: 'user_skills',
-        joinColumn: { name: 'userId', referencedColumnName: 'id' },
-        inverseJoinColumn: { name: 'skillId', referencedColumnName: 'id' },
-    }),
+    (0, typeorm_1.OneToMany)(() => user_skill_entity_1.UserSkill, (userSkill) => userSkill.user, { cascade: true }),
     __metadata("design:type", Array)
 ], User.prototype, "skills", void 0);
 __decorate([

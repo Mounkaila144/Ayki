@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Brackets } from 'typeorm';
 import { User, UserType, UserStatus } from '../../entities/user.entity';
 import { UserProfile } from '../../entities/user-profile.entity';
 import { UserSkill } from '../../entities/user-skill.entity';
@@ -8,6 +8,7 @@ import { Experience } from '../../entities/experience.entity';
 import { Education } from '../../entities/education.entity';
 import { Application } from '../../entities/application.entity';
 import { Bookmark, BookmarkType } from '../../entities/bookmark.entity';
+import * as Fuse from 'fuse.js';
 
 @Injectable()
 export class RecruitersService {
@@ -64,7 +65,7 @@ export class RecruitersService {
 
   async searchCandidates(recruiterId: string, filters: any) {
     try {
-      console.log('=== SEARCH CANDIDATES START ===');
+      console.log('=== ADVANCED SEARCH CANDIDATES START ===');
       console.log('Recruiter ID:', recruiterId);
       console.log('Filters received:', filters);
 
@@ -73,93 +74,220 @@ export class RecruitersService {
         location = '',
         skills = '',
         experience = '',
-        sortBy = 'lastActive',
+        sortBy = 'relevance',
         sortOrder = 'desc',
         page = 1,
         limit = 12
       } = filters;
 
-      // D'abord, comptons tous les candidats actifs
-      const totalCandidates = await this.userRepository.count({
-        where: { userType: UserType.CANDIDATE, status: UserStatus.ACTIVE }
-      });
-      console.log('Total active candidates in database:', totalCandidates);
-
+      // Construire la requête de base avec toutes les relations nécessaires
       const queryBuilder = this.userRepository
         .createQueryBuilder('user')
         .leftJoinAndSelect('user.profile', 'profile')
-        .leftJoinAndSelect('user.skills', 'skills')
+        .leftJoinAndSelect('user.skills', 'userSkills')
+        .leftJoinAndSelect('userSkills.skill', 'skill')
         .leftJoinAndSelect('user.experiences', 'experiences')
         .leftJoinAndSelect('user.educations', 'educations')
+        .leftJoinAndSelect('user.documents', 'documents')
         .where('user.userType = :userType', { userType: UserType.CANDIDATE })
         .andWhere('user.status = :status', { status: UserStatus.ACTIVE });
 
-      // Filtres de recherche
-      if (search) {
+      // Si il y a une recherche textuelle, on fait une recherche avancée multi-champs
+      if (search && search.trim() !== '') {
+        const searchTerm = `%${search.trim()}%`;
+
         queryBuilder.andWhere(
-          '(profile.firstName LIKE :search OR profile.lastName LIKE :search OR profile.title LIKE :search)',
-          { search: `%${search}%` }
+          new Brackets((qb) => {
+            // Recherche dans le profil
+            qb.where('profile.firstName LIKE :search', { search: searchTerm })
+              .orWhere('profile.lastName LIKE :search', { search: searchTerm })
+              .orWhere('profile.title LIKE :search', { search: searchTerm })
+              .orWhere('profile.summary LIKE :search', { search: searchTerm })
+              .orWhere('profile.bio LIKE :search', { search: searchTerm })
+              // Recherche dans les compétences
+              .orWhere('skill.name LIKE :search', { search: searchTerm })
+              // Recherche dans les expériences
+              .orWhere('experiences.title LIKE :search', { search: searchTerm })
+              .orWhere('experiences.company LIKE :search', { search: searchTerm })
+              .orWhere('experiences.description LIKE :search', { search: searchTerm })
+              .orWhere('experiences.industry LIKE :search', { search: searchTerm })
+              // Recherche dans les formations
+              .orWhere('educations.degree LIKE :search', { search: searchTerm })
+              .orWhere('educations.school LIKE :search', { search: searchTerm })
+              .orWhere('educations.fieldOfStudy LIKE :search', { search: searchTerm })
+              .orWhere('educations.description LIKE :search', { search: searchTerm });
+          })
         );
       }
 
-      if (location) {
-        queryBuilder.andWhere('profile.location LIKE :location', { location: `%${location}%` });
-      }
-
-      if (skills) {
-        const skillsArray = skills.split(',').map((s: string) => s.trim());
-        queryBuilder.andWhere('skills.name IN (:...skills)', { skills: skillsArray });
-      }
-
-      // Tri
-      switch (sortBy) {
-        case 'name':
-          queryBuilder.orderBy('profile.firstName', sortOrder.toUpperCase() as 'ASC' | 'DESC');
-          break;
-        case 'experience':
-          queryBuilder.orderBy('profile.yearsOfExperience', sortOrder.toUpperCase() as 'ASC' | 'DESC');
-          break;
-        case 'lastActive':
-        default:
-          queryBuilder.orderBy('user.updatedAt', sortOrder.toUpperCase() as 'ASC' | 'DESC');
-          break;
-      }
-
-      // Pagination
-      const offset = (page - 1) * limit;
-      queryBuilder.skip(offset).take(limit);
-
-      // Log de la requête générée
-      console.log('Generated SQL:', queryBuilder.getSql());
-
-      const [users, total] = await queryBuilder.getManyAndCount();
-      
-      console.log('Users found:', users.length);
-      console.log('Total count:', total);
-
-      if (users.length > 0) {
-        console.log('First user sample:', {
-          id: users[0].id,
-          userType: users[0].userType,
-          hasProfile: !!users[0].profile,
-          profileData: users[0].profile
+      // Filtre de localisation
+      if (location && location.trim() !== '') {
+        queryBuilder.andWhere('profile.location LIKE :location', {
+          location: `%${location.trim()}%`
         });
       }
 
-      // Transformer les données pour le frontend
-      const candidates = users.map(user => this.transformUserToCandidate(user));
-      console.log('Candidates after transformation:', candidates.length);
+      // Filtre de compétences spécifiques
+      if (skills && skills.trim() !== '') {
+        const skillsArray = skills.split(',').map((s: string) => s.trim()).filter(Boolean);
+        if (skillsArray.length > 0) {
+          queryBuilder.andWhere('skill.name IN (:...skillsList)', {
+            skillsList: skillsArray
+          });
+        }
+      }
+
+      // Récupérer tous les candidats matchant (sans pagination d'abord pour le fuzzy search)
+      const users = await queryBuilder.getMany();
+
+      console.log('Initial SQL results:', users.length);
+
+      // Si on a un terme de recherche, on applique le fuzzy matching avec Fuse.js
+      let scoredCandidates = users.map(user => ({
+        user,
+        score: 0,
+        matchDetails: []
+      }));
+
+      if (search && search.trim() !== '') {
+        // Préparer les données pour Fuse.js
+        const searchableData = users.map(user => {
+          const profile = user.profile || {};
+          const userSkills = user.skills?.map(us => us.skill?.name).filter(Boolean) || [];
+          const experiences = user.experiences || [];
+          const educations = user.educations || [];
+
+          return {
+            user,
+            searchableText: [
+              profile.firstName,
+              profile.lastName,
+              profile.title,
+              profile.summary,
+              profile.bio,
+              ...userSkills,
+              ...(profile.languages || []),
+              ...(profile.interests || []),
+              ...experiences.map(exp => [
+                exp.title,
+                exp.company,
+                exp.description,
+                ...(exp.technologies || []),
+                ...(exp.skills || []),
+                exp.industry
+              ]).flat(),
+              ...educations.map(edu => [
+                edu.degree,
+                edu.school,
+                edu.fieldOfStudy,
+                edu.description,
+                ...(edu.coursework || [])
+              ]).flat()
+            ].filter(Boolean).join(' ')
+          };
+        });
+
+        // Configuration de Fuse.js pour le fuzzy search
+        const FuseClass = (Fuse as any).default || Fuse;
+        const fuse = new FuseClass(searchableData, {
+          keys: ['searchableText'],
+          threshold: 0.4, // Tolérance aux erreurs (0 = exact, 1 = tout accepter)
+          distance: 100, // Distance maximale pour considérer un match
+          minMatchCharLength: 2,
+          includeScore: true,
+          ignoreLocation: true, // Chercher partout dans le texte
+          useExtendedSearch: true
+        });
+
+        // Effectuer la recherche fuzzy
+        const fuseResults = fuse.search(search.trim());
+
+        console.log('Fuse.js results:', fuseResults.length);
+
+        // Créer un map des scores
+        const scoreMap = new Map();
+        fuseResults.forEach((result, index) => {
+          // Score inversé : plus le score Fuse est proche de 0, mieux c'est
+          // On transforme en score de pertinence de 0 à 100
+          const relevanceScore = Math.round((1 - (result.score || 0)) * 100);
+          scoreMap.set(result.item.user.id, {
+            score: relevanceScore,
+            position: index
+          });
+        });
+
+        // Appliquer les scores
+        scoredCandidates = users
+          .map(user => {
+            const scoreData = scoreMap.get(user.id);
+            return {
+              user,
+              score: scoreData?.score || 0,
+              matchDetails: []
+            };
+          })
+          .filter(item => item.score > 0); // Garder seulement ceux qui matchent
+      }
+
+      // Tri des résultats
+      if (sortBy === 'relevance' && search && search.trim() !== '') {
+        // Tri par pertinence (score décroissant)
+        scoredCandidates.sort((a, b) => b.score - a.score);
+      } else {
+        // Tris traditionnels
+        scoredCandidates.sort((a, b) => {
+          let comparison = 0;
+          switch (sortBy) {
+            case 'name':
+              const nameA = a.user.profile?.firstName || '';
+              const nameB = b.user.profile?.firstName || '';
+              comparison = nameA.localeCompare(nameB);
+              break;
+            case 'experience':
+              const expA = a.user.profile?.yearsOfExperience || 0;
+              const expB = b.user.profile?.yearsOfExperience || 0;
+              comparison = expA - expB;
+              break;
+            case 'lastActive':
+            default:
+              const dateA = new Date(a.user.updatedAt).getTime();
+              const dateB = new Date(b.user.updatedAt).getTime();
+              comparison = dateA - dateB;
+              break;
+          }
+          return sortOrder === 'desc' ? -comparison : comparison;
+        });
+      }
+
+      // Pagination après le tri
+      const total = scoredCandidates.length;
+      const offset = (parseInt(page) - 1) * parseInt(limit);
+      const paginatedResults = scoredCandidates.slice(offset, offset + parseInt(limit));
+
+      // Transformation pour le frontend
+      const candidates = paginatedResults.map(item => {
+        const candidate = this.transformUserToCandidate(item.user);
+        return {
+          ...candidate,
+          matchScore: item.score || candidate.matchScore
+        };
+      });
 
       const result = {
         data: candidates,
         total,
         page: parseInt(page),
-        totalPages: Math.ceil(total / limit),
+        totalPages: Math.ceil(total / parseInt(limit)),
         limit: parseInt(limit)
       };
 
-      console.log('=== SEARCH CANDIDATES END ===');
-      console.log('Result:', result);
+      console.log('=== ADVANCED SEARCH CANDIDATES END ===');
+      console.log('Results:', {
+        totalFound: total,
+        page: result.page,
+        returned: candidates.length
+      });
+
       return result;
     } catch (error) {
       console.error('Error searching candidates:', error);
@@ -171,7 +299,7 @@ export class RecruitersService {
     try {
       const bookmarks = await this.bookmarkRepository.find({
         where: { recruiterId: recruiterId },
-        relations: ['candidate', 'candidate.profile', 'candidate.skills']
+        relations: ['candidate', 'candidate.profile', 'candidate.skills', 'candidate.skills.skill']
       });
 
       return bookmarks.map(bookmark =>
@@ -226,6 +354,7 @@ export class RecruitersService {
         relations: [
           'profile',
           'skills',
+          'skills.skill',
           'experiences',
           'educations',
           'documents'
@@ -245,9 +374,13 @@ export class RecruitersService {
 
   private transformUserToCandidate(user: User, detailed = false) {
     const profile = user.profile;
-    const skills = user.skills?.map(skill => skill.name).filter(Boolean) || [];
+    const skills = user.skills?.map(userSkill => userSkill.skill?.name).filter(Boolean) || [];
     const latestExperience = user.experiences?.[0];
     const latestEducation = user.educations?.[0];
+
+    // Trouver le CV principal
+    const mainCV = user.documents?.find(doc => doc.type === 'cv' && doc.isMain);
+    const cvUrl = mainCV?.url || mainCV?.path || null;
 
     const baseData = {
       id: user.id,
@@ -268,13 +401,14 @@ export class RecruitersService {
       isBookmarked: false, // À calculer si nécessaire
       matchScore: Math.floor(Math.random() * 30) + 70, // Score aléatoire pour l'instant
       profileCompletion: profile?.profileCompletion || 0,
+      cvUrl: cvUrl,
+      phone: user.phone || null,
+      email: profile?.email || null,
     };
 
     if (detailed) {
       return {
         ...baseData,
-        email: profile?.email || '',
-        phone: user.phone || '',
         experiences: user.experiences || [],
         educations: user.educations || [],
         documents: user.documents || [],

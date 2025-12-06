@@ -17,10 +17,13 @@ const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const user_profile_entity_1 = require("../../entities/user-profile.entity");
+const user_entity_1 = require("../../entities/user.entity");
 let ProfilesService = class ProfilesService {
     profileRepository;
-    constructor(profileRepository) {
+    userRepository;
+    constructor(profileRepository, userRepository) {
         this.profileRepository = profileRepository;
+        this.userRepository = userRepository;
     }
     async findByUserId(userId) {
         const profile = await this.profileRepository.findOne({
@@ -30,7 +33,10 @@ let ProfilesService = class ProfilesService {
         if (!profile) {
             throw new common_1.NotFoundException('Profil non trouvé');
         }
-        return profile;
+        return {
+            ...profile,
+            phone: profile.user?.phone || null,
+        };
     }
     async updateByUserId(userId, updateData) {
         let profile = await this.profileRepository.findOne({
@@ -47,11 +53,89 @@ let ProfilesService = class ProfilesService {
         }
         return await this.profileRepository.save(profile);
     }
+    async findBySlug(slug) {
+        const slugParts = slug.split('-');
+        if (slugParts.length < 3) {
+            throw new common_1.NotFoundException('Format de slug invalide');
+        }
+        const userIdPart = slugParts[slugParts.length - 1];
+        const users = await this.userRepository.find({
+            where: { userType: 'candidate' },
+            relations: [
+                'profile',
+                'experiences',
+                'educations',
+                'skills',
+                'skills.skill',
+            ],
+        });
+        const user = users.find(u => u.id.startsWith(userIdPart));
+        if (!user || !user.profile) {
+            throw new common_1.NotFoundException('Profil non trouvé');
+        }
+        const expectedSlug = this.generateSlug(user.profile.firstName, user.profile.lastName, user.id);
+        if (expectedSlug !== slug) {
+            throw new common_1.NotFoundException('Profil non trouvé');
+        }
+        user.profile.profileViews += 1;
+        await this.profileRepository.save(user.profile);
+        return {
+            id: user.id,
+            slug: expectedSlug,
+            firstName: user.profile.firstName,
+            lastName: user.profile.lastName,
+            title: user.profile.title,
+            location: user.profile.location,
+            email: user.profile.email,
+            phone: user.phone,
+            summary: user.profile.summary,
+            avatar: user.profile.avatar,
+            skills: (user.skills || []).map((userSkill) => ({
+                id: userSkill.id,
+                name: userSkill.skill?.name || 'Compétence inconnue',
+                level: userSkill.level,
+                yearsOfExperience: userSkill.yearsOfExperience || 0,
+            })),
+            experiences: (user.experiences || []).map((exp) => ({
+                id: exp.id,
+                title: exp.title,
+                company: exp.company,
+                location: exp.location,
+                startDate: exp.startDate,
+                endDate: exp.endDate,
+                isCurrent: exp.isCurrent || false,
+                description: exp.description,
+            })),
+            education: (user.educations || []).map((edu) => ({
+                id: edu.id,
+                degree: edu.degree,
+                school: edu.school,
+                fieldOfStudy: edu.fieldOfStudy,
+                graduationYear: edu.graduationYear,
+                grade: edu.grade,
+                description: edu.description,
+            })),
+        };
+    }
+    generateSlug(firstName, lastName, userId) {
+        const cleanText = (text) => text
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '');
+        const firstSlug = cleanText(firstName);
+        const lastSlug = cleanText(lastName);
+        const shortId = userId.substring(0, 8);
+        return `${firstSlug}-${lastSlug}-${shortId}`;
+    }
 };
 exports.ProfilesService = ProfilesService;
 exports.ProfilesService = ProfilesService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(user_profile_entity_1.UserProfile)),
-    __metadata("design:paramtypes", [typeorm_2.Repository])
+    __param(1, (0, typeorm_1.InjectRepository)(user_entity_1.User)),
+    __metadata("design:paramtypes", [typeorm_2.Repository,
+        typeorm_2.Repository])
 ], ProfilesService);
 //# sourceMappingURL=profiles.service.js.map

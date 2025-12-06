@@ -6,14 +6,12 @@ import {
   UpdateDateColumn,
   OneToOne,
   OneToMany,
-  ManyToMany,
-  JoinTable,
 } from 'typeorm';
 import { UserProfile } from './user-profile.entity';
 import { Company } from './company.entity';
 import { Experience } from './experience.entity';
 import { Education } from './education.entity';
-import { Skill } from './skill.entity';
+import { UserSkill } from './user-skill.entity';
 import { JobOffer } from './job-offer.entity';
 import { Application } from './application.entity';
 import { Bookmark } from './bookmark.entity';
@@ -97,13 +95,8 @@ export class User {
   @OneToMany(() => Education, (education) => education.user, { cascade: true })
   educations: Education[];
 
-  @ManyToMany(() => Skill, (skill) => skill.users)
-  @JoinTable({
-    name: 'user_skills',
-    joinColumn: { name: 'userId', referencedColumnName: 'id' },
-    inverseJoinColumn: { name: 'skillId', referencedColumnName: 'id' },
-  })
-  skills: Skill[];
+  @OneToMany(() => UserSkill, (userSkill) => userSkill.user, { cascade: true })
+  skills: UserSkill[];
 
   @OneToMany(() => JobOffer, (jobOffer) => jobOffer.recruiter)
   jobOffers: JobOffer[];

@@ -14,6 +14,7 @@ export { Interview, InterviewType, InterviewStatus } from './interview.entity';
 export { Document, DocumentType, DocumentStatus } from './document.entity';
 export { Notification, NotificationType, NotificationPriority, NotificationChannel } from './notification.entity';
 export { Analytics, AnalyticsType, DeviceType } from './analytics.entity';
+export { Partner } from './partner.entity';
 
 // Import all entity classes
 import { User } from './user.entity';
@@ -31,6 +32,7 @@ import { Interview } from './interview.entity';
 import { Document } from './document.entity';
 import { Notification } from './notification.entity';
 import { Analytics } from './analytics.entity';
+import { Partner } from './partner.entity';
 
 // Array of all entities for TypeORM configuration
 export const entities = [
@@ -49,4 +51,5 @@ export const entities = [
   Document,
   Notification,
   Analytics,
+  Partner,
 ];

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.entities = exports.DeviceType = exports.AnalyticsType = exports.Analytics = exports.NotificationChannel = exports.NotificationPriority = exports.NotificationType = exports.Notification = exports.DocumentStatus = exports.DocumentType = exports.Document = exports.InterviewStatus = exports.InterviewType = exports.Interview = exports.BookmarkType = exports.Bookmark = exports.ApplicationSource = exports.ApplicationStatus = exports.Application = exports.SkillImportance = exports.JobOfferSkill = exports.RemotePolicy = exports.ExperienceLevel = exports.JobStatus = exports.JobOffer = exports.EndorsementStatus = exports.SkillLevel = exports.UserSkill = exports.SkillCategory = exports.Skill = exports.EducationStatus = exports.DegreeLevel = exports.Education = exports.EmploymentType = exports.Experience = exports.CompanyType = exports.CompanySize = exports.Company = exports.AvailabilityStatus = exports.UserProfile = exports.AdminRole = exports.UserStatus = exports.UserType = exports.User = void 0;
+exports.entities = exports.Partner = exports.DeviceType = exports.AnalyticsType = exports.Analytics = exports.NotificationChannel = exports.NotificationPriority = exports.NotificationType = exports.Notification = exports.DocumentStatus = exports.DocumentType = exports.Document = exports.InterviewStatus = exports.InterviewType = exports.Interview = exports.BookmarkType = exports.Bookmark = exports.ApplicationSource = exports.ApplicationStatus = exports.Application = exports.SkillImportance = exports.JobOfferSkill = exports.RemotePolicy = exports.ExperienceLevel = exports.JobStatus = exports.JobOffer = exports.EndorsementStatus = exports.SkillLevel = exports.UserSkill = exports.SkillCategory = exports.Skill = exports.EducationStatus = exports.DegreeLevel = exports.Education = exports.EmploymentType = exports.Experience = exports.CompanyType = exports.CompanySize = exports.Company = exports.AvailabilityStatus = exports.UserProfile = exports.AdminRole = exports.UserStatus = exports.UserType = exports.User = void 0;
 var user_entity_1 = require("./user.entity");
 Object.defineProperty(exports, "User", { enumerable: true, get: function () { return user_entity_1.User; } });
 Object.defineProperty(exports, "UserType", { enumerable: true, get: function () { return user_entity_1.UserType; } });
@@ -59,6 +59,8 @@ var analytics_entity_1 = require("./analytics.entity");
 Object.defineProperty(exports, "Analytics", { enumerable: true, get: function () { return analytics_entity_1.Analytics; } });
 Object.defineProperty(exports, "AnalyticsType", { enumerable: true, get: function () { return analytics_entity_1.AnalyticsType; } });
 Object.defineProperty(exports, "DeviceType", { enumerable: true, get: function () { return analytics_entity_1.DeviceType; } });
+var partner_entity_1 = require("./partner.entity");
+Object.defineProperty(exports, "Partner", { enumerable: true, get: function () { return partner_entity_1.Partner; } });
 const user_entity_2 = require("./user.entity");
 const user_profile_entity_2 = require("./user-profile.entity");
 const company_entity_2 = require("./company.entity");
@@ -74,6 +76,7 @@ const interview_entity_2 = require("./interview.entity");
 const document_entity_2 = require("./document.entity");
 const notification_entity_2 = require("./notification.entity");
 const analytics_entity_2 = require("./analytics.entity");
+const partner_entity_2 = require("./partner.entity");
 exports.entities = [
     user_entity_2.User,
     user_profile_entity_2.UserProfile,
@@ -90,5 +93,6 @@ exports.entities = [
     document_entity_2.Document,
     notification_entity_2.Notification,
     analytics_entity_2.Analytics,
+    partner_entity_2.Partner,
 ];
 //# sourceMappingURL=index.js.map

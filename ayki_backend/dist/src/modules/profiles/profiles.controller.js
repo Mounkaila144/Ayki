@@ -22,6 +22,9 @@ let ProfilesController = class ProfilesController {
     constructor(profilesService) {
         this.profilesService = profilesService;
     }
+    async getPublicProfile(slug) {
+        return this.profilesService.findBySlug(slug);
+    }
     async getMyProfile(req) {
         return this.profilesService.findByUserId(req.user.id);
     }
@@ -31,7 +34,17 @@ let ProfilesController = class ProfilesController {
 };
 exports.ProfilesController = ProfilesController;
 __decorate([
+    (0, common_1.Get)('public/:slug'),
+    (0, swagger_1.ApiOperation)({ summary: 'Récupérer un profil public par son slug' }),
+    __param(0, (0, common_1.Param)('slug')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], ProfilesController.prototype, "getPublicProfile", null);
+__decorate([
     (0, common_1.Get)('me'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)(),
     (0, swagger_1.ApiOperation)({ summary: 'Récupérer le profil de l\'utilisateur connecté' }),
     __param(0, (0, common_1.Request)()),
     __metadata("design:type", Function),
@@ -40,6 +53,8 @@ __decorate([
 ], ProfilesController.prototype, "getMyProfile", null);
 __decorate([
     (0, common_1.Put)('me'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)(),
     (0, swagger_1.ApiOperation)({ summary: 'Mettre à jour le profil de l\'utilisateur connecté' }),
     __param(0, (0, common_1.Request)()),
     __param(1, (0, common_1.Body)()),
@@ -50,8 +65,6 @@ __decorate([
 exports.ProfilesController = ProfilesController = __decorate([
     (0, swagger_1.ApiTags)('Profiles'),
     (0, common_1.Controller)('profiles'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    (0, swagger_1.ApiBearerAuth)(),
     __metadata("design:paramtypes", [profiles_service_1.ProfilesService])
 ], ProfilesController);
 //# sourceMappingURL=profiles.controller.js.map

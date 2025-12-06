@@ -11,7 +11,6 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Skill = exports.SkillCategory = void 0;
 const typeorm_1 = require("typeorm");
-const user_entity_1 = require("./user.entity");
 const user_skill_entity_1 = require("./user-skill.entity");
 const job_offer_skill_entity_1 = require("./job-offer-skill.entity");
 var SkillCategory;
@@ -47,7 +46,6 @@ let Skill = class Skill {
     sortOrder;
     createdAt;
     updatedAt;
-    users;
     userSkills;
     jobOfferSkills;
 };
@@ -120,10 +118,6 @@ __decorate([
     (0, typeorm_1.UpdateDateColumn)(),
     __metadata("design:type", Date)
 ], Skill.prototype, "updatedAt", void 0);
-__decorate([
-    (0, typeorm_1.ManyToMany)(() => user_entity_1.User, (user) => user.skills),
-    __metadata("design:type", Array)
-], Skill.prototype, "users", void 0);
 __decorate([
     (0, typeorm_1.OneToMany)(() => user_skill_entity_1.UserSkill, (userSkill) => userSkill.skill),
     __metadata("design:type", Array)

@@ -4,10 +4,8 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-  ManyToMany,
   OneToMany,
 } from 'typeorm';
-import { User } from './user.entity';
 import { UserSkill } from './user-skill.entity';
 import { JobOfferSkill } from './job-offer-skill.entity';
 
@@ -84,9 +82,6 @@ export class Skill {
   updatedAt: Date;
 
   // Relations
-  @ManyToMany(() => User, (user) => user.skills)
-  users: User[];
-
   @OneToMany(() => UserSkill, (userSkill) => userSkill.skill)
   userSkills: UserSkill[];
 

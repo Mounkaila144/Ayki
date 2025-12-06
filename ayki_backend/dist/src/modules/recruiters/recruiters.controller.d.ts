@@ -16,6 +16,7 @@ export declare class CandidatesController {
     constructor(recruitersService: RecruitersService);
     searchCandidates(query: any, req: any): Promise<{
         data: ({
+            matchScore: number;
             id: string;
             firstName: string;
             lastName: string;
@@ -32,11 +33,12 @@ export declare class CandidatesController {
             education: string;
             company: string;
             isBookmarked: boolean;
-            matchScore: number;
             profileCompletion: number;
+            cvUrl: string | null;
+            phone: string | null;
+            email: string | null;
         } | {
-            email: string;
-            phone: string;
+            matchScore: number;
             experiences: import("../../entities").Experience[];
             educations: import("../../entities").Education[];
             documents: import("../../entities").Document[];
@@ -56,8 +58,10 @@ export declare class CandidatesController {
             education: string;
             company: string;
             isBookmarked: boolean;
-            matchScore: number;
             profileCompletion: number;
+            cvUrl: string | null;
+            phone: string | null;
+            email: string | null;
         })[];
         total: number;
         page: number;
@@ -83,9 +87,10 @@ export declare class CandidatesController {
         isBookmarked: boolean;
         matchScore: number;
         profileCompletion: number;
+        cvUrl: string | null;
+        phone: string | null;
+        email: string | null;
     } | {
-        email: string;
-        phone: string;
         experiences: import("../../entities").Experience[];
         educations: import("../../entities").Education[];
         documents: import("../../entities").Document[];
@@ -107,6 +112,9 @@ export declare class CandidatesController {
         isBookmarked: boolean;
         matchScore: number;
         profileCompletion: number;
+        cvUrl: string | null;
+        phone: string | null;
+        email: string | null;
     })[]>;
     toggleBookmark(candidateId: string, req: any): Promise<{
         bookmarked: boolean;
@@ -131,9 +139,10 @@ export declare class CandidatesController {
         isBookmarked: boolean;
         matchScore: number;
         profileCompletion: number;
+        cvUrl: string | null;
+        phone: string | null;
+        email: string | null;
     } | {
-        email: string;
-        phone: string;
         experiences: import("../../entities").Experience[];
         educations: import("../../entities").Education[];
         documents: import("../../entities").Document[];
@@ -155,5 +164,8 @@ export declare class CandidatesController {
         isBookmarked: boolean;
         matchScore: number;
         profileCompletion: number;
+        cvUrl: string | null;
+        phone: string | null;
+        email: string | null;
     }>;
 }

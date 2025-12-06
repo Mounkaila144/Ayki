@@ -23,6 +23,7 @@ const experience_entity_1 = require("../../entities/experience.entity");
 const education_entity_1 = require("../../entities/education.entity");
 const application_entity_1 = require("../../entities/application.entity");
 const bookmark_entity_1 = require("../../entities/bookmark.entity");
+const Fuse = require("fuse.js");
 let RecruitersService = class RecruitersService {
     userRepository;
     profileRepository;
@@ -71,69 +72,175 @@ let RecruitersService = class RecruitersService {
     }
     async searchCandidates(recruiterId, filters) {
         try {
-            console.log('=== SEARCH CANDIDATES START ===');
+            console.log('=== ADVANCED SEARCH CANDIDATES START ===');
             console.log('Recruiter ID:', recruiterId);
             console.log('Filters received:', filters);
-            const { search = '', location = '', skills = '', experience = '', sortBy = 'lastActive', sortOrder = 'desc', page = 1, limit = 12 } = filters;
-            const totalCandidates = await this.userRepository.count({
-                where: { userType: user_entity_1.UserType.CANDIDATE, status: user_entity_1.UserStatus.ACTIVE }
-            });
-            console.log('Total active candidates in database:', totalCandidates);
+            const { search = '', location = '', skills = '', experience = '', sortBy = 'relevance', sortOrder = 'desc', page = 1, limit = 12 } = filters;
             const queryBuilder = this.userRepository
                 .createQueryBuilder('user')
                 .leftJoinAndSelect('user.profile', 'profile')
-                .leftJoinAndSelect('user.skills', 'skills')
+                .leftJoinAndSelect('user.skills', 'userSkills')
+                .leftJoinAndSelect('userSkills.skill', 'skill')
                 .leftJoinAndSelect('user.experiences', 'experiences')
                 .leftJoinAndSelect('user.educations', 'educations')
+                .leftJoinAndSelect('user.documents', 'documents')
                 .where('user.userType = :userType', { userType: user_entity_1.UserType.CANDIDATE })
                 .andWhere('user.status = :status', { status: user_entity_1.UserStatus.ACTIVE });
-            if (search) {
-                queryBuilder.andWhere('(profile.firstName LIKE :search OR profile.lastName LIKE :search OR profile.title LIKE :search)', { search: `%${search}%` });
+            if (search && search.trim() !== '') {
+                const searchTerm = `%${search.trim()}%`;
+                queryBuilder.andWhere(new typeorm_2.Brackets((qb) => {
+                    qb.where('profile.firstName LIKE :search', { search: searchTerm })
+                        .orWhere('profile.lastName LIKE :search', { search: searchTerm })
+                        .orWhere('profile.title LIKE :search', { search: searchTerm })
+                        .orWhere('profile.summary LIKE :search', { search: searchTerm })
+                        .orWhere('profile.bio LIKE :search', { search: searchTerm })
+                        .orWhere('skill.name LIKE :search', { search: searchTerm })
+                        .orWhere('experiences.title LIKE :search', { search: searchTerm })
+                        .orWhere('experiences.company LIKE :search', { search: searchTerm })
+                        .orWhere('experiences.description LIKE :search', { search: searchTerm })
+                        .orWhere('experiences.industry LIKE :search', { search: searchTerm })
+                        .orWhere('educations.degree LIKE :search', { search: searchTerm })
+                        .orWhere('educations.school LIKE :search', { search: searchTerm })
+                        .orWhere('educations.fieldOfStudy LIKE :search', { search: searchTerm })
+                        .orWhere('educations.description LIKE :search', { search: searchTerm });
+                }));
             }
-            if (location) {
-                queryBuilder.andWhere('profile.location LIKE :location', { location: `%${location}%` });
-            }
-            if (skills) {
-                const skillsArray = skills.split(',').map((s) => s.trim());
-                queryBuilder.andWhere('skills.name IN (:...skills)', { skills: skillsArray });
-            }
-            switch (sortBy) {
-                case 'name':
-                    queryBuilder.orderBy('profile.firstName', sortOrder.toUpperCase());
-                    break;
-                case 'experience':
-                    queryBuilder.orderBy('profile.yearsOfExperience', sortOrder.toUpperCase());
-                    break;
-                case 'lastActive':
-                default:
-                    queryBuilder.orderBy('user.updatedAt', sortOrder.toUpperCase());
-                    break;
-            }
-            const offset = (page - 1) * limit;
-            queryBuilder.skip(offset).take(limit);
-            console.log('Generated SQL:', queryBuilder.getSql());
-            const [users, total] = await queryBuilder.getManyAndCount();
-            console.log('Users found:', users.length);
-            console.log('Total count:', total);
-            if (users.length > 0) {
-                console.log('First user sample:', {
-                    id: users[0].id,
-                    userType: users[0].userType,
-                    hasProfile: !!users[0].profile,
-                    profileData: users[0].profile
+            if (location && location.trim() !== '') {
+                queryBuilder.andWhere('profile.location LIKE :location', {
+                    location: `%${location.trim()}%`
                 });
             }
-            const candidates = users.map(user => this.transformUserToCandidate(user));
-            console.log('Candidates after transformation:', candidates.length);
+            if (skills && skills.trim() !== '') {
+                const skillsArray = skills.split(',').map((s) => s.trim()).filter(Boolean);
+                if (skillsArray.length > 0) {
+                    queryBuilder.andWhere('skill.name IN (:...skillsList)', {
+                        skillsList: skillsArray
+                    });
+                }
+            }
+            const users = await queryBuilder.getMany();
+            console.log('Initial SQL results:', users.length);
+            let scoredCandidates = users.map(user => ({
+                user,
+                score: 0,
+                matchDetails: []
+            }));
+            if (search && search.trim() !== '') {
+                const searchableData = users.map(user => {
+                    const profile = user.profile || {};
+                    const userSkills = user.skills?.map(us => us.skill?.name).filter(Boolean) || [];
+                    const experiences = user.experiences || [];
+                    const educations = user.educations || [];
+                    return {
+                        user,
+                        searchableText: [
+                            profile.firstName,
+                            profile.lastName,
+                            profile.title,
+                            profile.summary,
+                            profile.bio,
+                            ...userSkills,
+                            ...(profile.languages || []),
+                            ...(profile.interests || []),
+                            ...experiences.map(exp => [
+                                exp.title,
+                                exp.company,
+                                exp.description,
+                                ...(exp.technologies || []),
+                                ...(exp.skills || []),
+                                exp.industry
+                            ]).flat(),
+                            ...educations.map(edu => [
+                                edu.degree,
+                                edu.school,
+                                edu.fieldOfStudy,
+                                edu.description,
+                                ...(edu.coursework || [])
+                            ]).flat()
+                        ].filter(Boolean).join(' ')
+                    };
+                });
+                const FuseClass = Fuse.default || Fuse;
+                const fuse = new FuseClass(searchableData, {
+                    keys: ['searchableText'],
+                    threshold: 0.4,
+                    distance: 100,
+                    minMatchCharLength: 2,
+                    includeScore: true,
+                    ignoreLocation: true,
+                    useExtendedSearch: true
+                });
+                const fuseResults = fuse.search(search.trim());
+                console.log('Fuse.js results:', fuseResults.length);
+                const scoreMap = new Map();
+                fuseResults.forEach((result, index) => {
+                    const relevanceScore = Math.round((1 - (result.score || 0)) * 100);
+                    scoreMap.set(result.item.user.id, {
+                        score: relevanceScore,
+                        position: index
+                    });
+                });
+                scoredCandidates = users
+                    .map(user => {
+                    const scoreData = scoreMap.get(user.id);
+                    return {
+                        user,
+                        score: scoreData?.score || 0,
+                        matchDetails: []
+                    };
+                })
+                    .filter(item => item.score > 0);
+            }
+            if (sortBy === 'relevance' && search && search.trim() !== '') {
+                scoredCandidates.sort((a, b) => b.score - a.score);
+            }
+            else {
+                scoredCandidates.sort((a, b) => {
+                    let comparison = 0;
+                    switch (sortBy) {
+                        case 'name':
+                            const nameA = a.user.profile?.firstName || '';
+                            const nameB = b.user.profile?.firstName || '';
+                            comparison = nameA.localeCompare(nameB);
+                            break;
+                        case 'experience':
+                            const expA = a.user.profile?.yearsOfExperience || 0;
+                            const expB = b.user.profile?.yearsOfExperience || 0;
+                            comparison = expA - expB;
+                            break;
+                        case 'lastActive':
+                        default:
+                            const dateA = new Date(a.user.updatedAt).getTime();
+                            const dateB = new Date(b.user.updatedAt).getTime();
+                            comparison = dateA - dateB;
+                            break;
+                    }
+                    return sortOrder === 'desc' ? -comparison : comparison;
+                });
+            }
+            const total = scoredCandidates.length;
+            const offset = (parseInt(page) - 1) * parseInt(limit);
+            const paginatedResults = scoredCandidates.slice(offset, offset + parseInt(limit));
+            const candidates = paginatedResults.map(item => {
+                const candidate = this.transformUserToCandidate(item.user);
+                return {
+                    ...candidate,
+                    matchScore: item.score || candidate.matchScore
+                };
+            });
             const result = {
                 data: candidates,
                 total,
                 page: parseInt(page),
-                totalPages: Math.ceil(total / limit),
+                totalPages: Math.ceil(total / parseInt(limit)),
                 limit: parseInt(limit)
             };
-            console.log('=== SEARCH CANDIDATES END ===');
-            console.log('Result:', result);
+            console.log('=== ADVANCED SEARCH CANDIDATES END ===');
+            console.log('Results:', {
+                totalFound: total,
+                page: result.page,
+                returned: candidates.length
+            });
             return result;
         }
         catch (error) {
@@ -145,7 +252,7 @@ let RecruitersService = class RecruitersService {
         try {
             const bookmarks = await this.bookmarkRepository.find({
                 where: { recruiterId: recruiterId },
-                relations: ['candidate', 'candidate.profile', 'candidate.skills']
+                relations: ['candidate', 'candidate.profile', 'candidate.skills', 'candidate.skills.skill']
             });
             return bookmarks.map(bookmark => this.transformUserToCandidate(bookmark.candidate));
         }
@@ -191,6 +298,7 @@ let RecruitersService = class RecruitersService {
                 relations: [
                     'profile',
                     'skills',
+                    'skills.skill',
                     'experiences',
                     'educations',
                     'documents'
@@ -208,9 +316,11 @@ let RecruitersService = class RecruitersService {
     }
     transformUserToCandidate(user, detailed = false) {
         const profile = user.profile;
-        const skills = user.skills?.map(skill => skill.name).filter(Boolean) || [];
+        const skills = user.skills?.map(userSkill => userSkill.skill?.name).filter(Boolean) || [];
         const latestExperience = user.experiences?.[0];
         const latestEducation = user.educations?.[0];
+        const mainCV = user.documents?.find(doc => doc.type === 'cv' && doc.isMain);
+        const cvUrl = mainCV?.url || mainCV?.path || null;
         const baseData = {
             id: user.id,
             firstName: profile?.firstName || '',
@@ -230,12 +340,13 @@ let RecruitersService = class RecruitersService {
             isBookmarked: false,
             matchScore: Math.floor(Math.random() * 30) + 70,
             profileCompletion: profile?.profileCompletion || 0,
+            cvUrl: cvUrl,
+            phone: user.phone || null,
+            email: profile?.email || null,
         };
         if (detailed) {
             return {
                 ...baseData,
-                email: profile?.email || '',
-                phone: user.phone || '',
                 experiences: user.experiences || [],
                 educations: user.educations || [],
                 documents: user.documents || [],

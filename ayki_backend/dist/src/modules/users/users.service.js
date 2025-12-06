@@ -44,7 +44,7 @@ let UsersService = class UsersService {
     async findOne(id) {
         return this.userRepository.findOne({
             where: { id },
-            relations: ['profile', 'company', 'experiences', 'educations', 'skills'],
+            relations: ['profile', 'company', 'experiences', 'educations', 'skills', 'skills.skill'],
         });
     }
     async getUserExperiences(userId) {

@@ -1,4 +1,3 @@
-import { User } from './user.entity';
 import { UserSkill } from './user-skill.entity';
 import { JobOfferSkill } from './job-offer-skill.entity';
 export declare enum SkillCategory {
@@ -33,7 +32,6 @@ export declare class Skill {
     sortOrder: number;
     createdAt: Date;
     updatedAt: Date;
-    users: User[];
     userSkills: UserSkill[];
     jobOfferSkills: JobOfferSkill[];
 }

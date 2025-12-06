@@ -2,7 +2,7 @@ import { UserProfile } from './user-profile.entity';
 import { Company } from './company.entity';
 import { Experience } from './experience.entity';
 import { Education } from './education.entity';
-import { Skill } from './skill.entity';
+import { UserSkill } from './user-skill.entity';
 import { JobOffer } from './job-offer.entity';
 import { Application } from './application.entity';
 import { Bookmark } from './bookmark.entity';
@@ -39,7 +39,7 @@ export declare class User {
     company: Company;
     experiences: Experience[];
     educations: Education[];
-    skills: Skill[];
+    skills: UserSkill[];
     jobOffers: JobOffer[];
     applications: Application[];
     receivedApplications: Application[];

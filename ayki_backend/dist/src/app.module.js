@@ -27,6 +27,7 @@ const notifications_module_1 = require("./modules/notifications/notifications.mo
 const analytics_module_1 = require("./modules/analytics/analytics.module");
 const admin_module_1 = require("./modules/admin/admin.module");
 const recruiters_module_1 = require("./modules/recruiters/recruiters.module");
+const partners_module_1 = require("./modules/partners/partners.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -56,6 +57,7 @@ exports.AppModule = AppModule = __decorate([
             analytics_module_1.AnalyticsModule,
             admin_module_1.AdminModule,
             recruiters_module_1.RecruitersModule,
+            partners_module_1.PartnersModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],
