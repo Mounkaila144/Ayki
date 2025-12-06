@@ -198,6 +198,7 @@ export default function ProfilePage() {
                     src={profile.avatar.startsWith('/uploads/') ? `${process.env.NEXT_PUBLIC_API_URL}${profile.avatar}` : profile.avatar}
                     alt={`${profile.firstName} ${profile.lastName}`}
                     className="w-full h-full object-cover"
+                    crossOrigin="anonymous"
                   />
                 ) : (
                   <span className="text-3xl font-bold text-white">

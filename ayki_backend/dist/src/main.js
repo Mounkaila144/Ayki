@@ -9,6 +9,10 @@ async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
     app.useStaticAssets((0, path_1.join)(__dirname, '..', '..', 'uploads'), {
         prefix: '/uploads/',
+        setHeaders: (res) => {
+            res.set('Access-Control-Allow-Origin', '*');
+            res.set('Cross-Origin-Resource-Policy', 'cross-origin');
+        },
     });
     app.enableCors({
         origin: [
