@@ -204,18 +204,22 @@ export const useJobActions = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const applyToJob = useCallback(async (jobId: string) => {
+  const applyToJob = useCallback(async (jobId: string, applicationData?: { message?: string; coverLetter?: string }) => {
     try {
       setLoading(true);
       setError(null);
-      
-      // TODO: Implémenter l'API de candidature
-      const response = await fetch(`/api/jobs/${jobId}/apply`, {
+
+      const response = await fetch(`/api/applications`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
         },
+        body: JSON.stringify({
+          jobOfferId: jobId,
+          source: 'direct',
+          ...applicationData,
+        }),
       });
 
       if (!response.ok) {

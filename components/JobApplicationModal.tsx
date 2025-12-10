@@ -87,13 +87,16 @@ const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
         return;
       }
 
-      const response = await fetch(`/api/jobs/${job.id}/apply`, {
+      const response = await fetch(`/api/applications`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          jobOfferId: job.id,
+        }),
       });
 
       if (!response.ok) {
