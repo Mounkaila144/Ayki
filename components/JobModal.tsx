@@ -17,13 +17,12 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Briefcase, 
-  MapPin, 
-  DollarSign, 
-  Clock, 
-  Users, 
-  Star, 
+import {
+  Briefcase,
+  MapPin,
+  Clock,
+  Users,
+  Star,
   Zap,
   X,
   Plus
@@ -49,7 +48,7 @@ export default function JobModal({ open, onClose, job, onSave, loading = false }
     experienceLevel: 'mid',
     salaryMin: '',
     salaryMax: '',
-    currency: 'EUR',
+    currency: 'XOF',
     remotePolicy: 'on_site',
     isUrgent: false,
     isFeatured: false,
@@ -75,7 +74,7 @@ export default function JobModal({ open, onClose, job, onSave, loading = false }
           experienceLevel: job.experienceLevel || 'mid',
           salaryMin: job.salaryMin?.toString() || '',
           salaryMax: job.salaryMax?.toString() || '',
-          currency: job.currency || 'EUR',
+          currency: 'XOF',
           remotePolicy: job.remotePolicy || 'on_site',
           isUrgent: job.isUrgent || false,
           isFeatured: job.isFeatured || false,
@@ -94,7 +93,7 @@ export default function JobModal({ open, onClose, job, onSave, loading = false }
           experienceLevel: 'mid',
           salaryMin: '',
           salaryMax: '',
-          currency: 'EUR',
+          currency: 'XOF',
           remotePolicy: 'on_site',
           isUrgent: false,
           isFeatured: false,
@@ -348,49 +347,35 @@ export default function JobModal({ open, onClose, job, onSave, loading = false }
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="salaryMin">Salaire minimum</Label>
+                      <Label htmlFor="salaryMin">Salaire minimum (FCFA)</Label>
                       <div className="relative">
-                        <DollarSign className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                        <span className="absolute left-3 top-2.5 text-sm text-gray-400 font-medium">FCFA</span>
                         <Input
                           id="salaryMin"
                           type="number"
                           value={formData.salaryMin}
                           onChange={(e) => handleInputChange('salaryMin', e.target.value)}
-                          placeholder="40000"
-                          className="pl-10"
+                          placeholder="150000"
+                          className="pl-14"
                         />
                       </div>
                     </div>
 
                     <div>
-                      <Label htmlFor="salaryMax">Salaire maximum</Label>
+                      <Label htmlFor="salaryMax">Salaire maximum (FCFA)</Label>
                       <div className="relative">
-                        <DollarSign className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                        <span className="absolute left-3 top-2.5 text-sm text-gray-400 font-medium">FCFA</span>
                         <Input
                           id="salaryMax"
                           type="number"
                           value={formData.salaryMax}
                           onChange={(e) => handleInputChange('salaryMax', e.target.value)}
-                          placeholder="60000"
-                          className="pl-10"
+                          placeholder="300000"
+                          className="pl-14"
                         />
                       </div>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="currency">Devise</Label>
-                      <Select value={formData.currency} onValueChange={(value) => handleInputChange('currency', value)}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="EUR">EUR (€)</SelectItem>
-                          <SelectItem value="USD">USD ($)</SelectItem>
-                          <SelectItem value="GBP">GBP (£)</SelectItem>
-                        </SelectContent>
-                      </Select>
                     </div>
                   </div>
                 </CardContent>
