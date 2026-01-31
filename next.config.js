@@ -1,10 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // output: 'export', // Commented out to fix chunk loading issues
-  optimizeFonts: false,
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -21,6 +17,7 @@ const nextConfig = {
       },
     ],
   },
+  turbopack: {},
   async headers() {
     return [
       {
@@ -33,15 +30,6 @@ const nextConfig = {
         ],
       },
     ];
-  },
-  webpack: (config) => {
-    config.resolve.fallback = {
-      ...config.resolve.fallback,
-      fs: false,
-      net: false,
-      tls: false,
-    };
-    return config;
   },
 };
 

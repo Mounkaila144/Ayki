@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthToast } from "@/hooks/use-auth-toast";
 import styles from '../auth.module.css';
 
-export default function SignUpPage() {
+function SignUpContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { showSuccess, showError } = useAuthToast();
@@ -504,5 +504,13 @@ export default function SignUpPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function SignUpPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Chargement...</div>}>
+      <SignUpContent />
+    </Suspense>
   );
 }
